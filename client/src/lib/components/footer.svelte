@@ -143,7 +143,7 @@
           <p class="text-red-500">Error loading store information</p>
         {:else}
       <p class="lg:text-lg text-base  text-white leading-relaxed">
-        {store?.storeDescription || 'Jeya Medical Enterprises is a surgical distributor.It is established in the year 2014.It sells the surgical products in the wholesale and retail manner.'}
+        {store?.storeDescription || 'We work directly with licensed manufacturers to deliver authentic, high-quality fireworks at competitive prices, while upholding the highest safety standards in the industry.'}
       </p>
       {/if}
     </div>

@@ -141,12 +141,11 @@
         <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
      About Us
         </h2>
-        <div class="w-20 h-1.5 bg-orange-500 mb-8"></div>
         <p class="text-lg text-gray-600 mb-6">
           Founded in 2015, Indian Crackers has grown from a small local shop to one of the region's most trusted fireworks suppliers. Our passion for creating unforgettable moments drives everything we do.
         </p>
         <p class="text-lg text-gray-600 mb-8">
-          We partner directly with licensed manufacturers to bring you authentic, high-quality fireworks at competitive prices, all while maintaining the highest safety standards in the industry.
+          We work directly with licensed manufacturers to deliver authentic, high-quality fireworks at competitive prices, while upholding the highest safety standards in the industry.
         </p>
       </div>
       <div class="relative rounded-xl overflow-hidden shadow-2xl h-96">

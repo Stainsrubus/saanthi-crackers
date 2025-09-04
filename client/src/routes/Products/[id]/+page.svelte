@@ -18,7 +18,7 @@
   let isDescriptionExpanded = false;
   let showAllSpecs = false;
   let isFavorite = false;
-  let descriptionRef: HTMLParagraphElement;
+  let descriptionRef: HTMLParagraphElement | null;
   let showViewMore = false;
   let isInitialLoading = false;
   let productId: string | null = null;
@@ -57,7 +57,7 @@
 
   $: if ($cartQuery.data?.cart?.products && isInitialLoading) {
     const foundItem = $cartQuery.data.cart.products.find(
-      (item) => item.productId._id === productId
+      (item:any) => item.productId._id === productId
     );
     cartQuantity = foundItem ? foundItem.quantity : 0;
     if (desiredQuantity !== cartQuantity && isInitialLoading) {
@@ -131,18 +131,18 @@
     const autoplayParam = autoplay ? '&autoplay=1' : '&autoplay=0';
     return `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&showinfo=0&controls=1${autoplayParam}`;
   }
-
-  onMount(() => {
-    productId = $page.params.id;
-    if (productId) {
-      $productQuery.refetch();
-    }
-    const checkOverflow = () => {
+  const checkOverflow = () => {
       if (descriptionRef) {
         const { scrollHeight, offsetHeight } = descriptionRef;
         showViewMore = scrollHeight > offsetHeight;
       }
     };
+  onMount(() => {
+    productId = $page.params.id;
+    if (productId) {
+      $productQuery.refetch();
+    }
+    
     checkOverflow();
     window.addEventListener('resize', checkOverflow);
     return () => window.removeEventListener('resize', checkOverflow);
@@ -318,6 +318,9 @@
 
   $: visibleSpecs = showAllSpecs && $productQuery.data ? $productQuery.data.specifications : ($productQuery.data?.specifications || []).slice(0, 2);
   $: discountPercentage = $productQuery.data ? Math.round((($productQuery.data.strikePrice - $productQuery.data.MRP) / $productQuery.data.strikePrice) * 100) : 0;
+$: if ($productQuery.data?.description) {
+    setTimeout(checkOverflow, 50);
+  }
 </script>
 
 <main class="lg:!mx-20 md:mx-10 mx-4 py-8 max-w-screen-2xl scrollbar-hide">

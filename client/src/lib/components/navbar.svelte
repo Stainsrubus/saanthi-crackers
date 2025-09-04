@@ -60,7 +60,7 @@
 
     <!-- Contact Icons -->
     <div class="flex items-center gap-2">
-      <div class="flex items-center lg:hover:bg-gray-200 lg:hover:rounded">
+      <div class="flex items-center ">
         <DropdownMenu>
           <DropdownMenuTrigger>
             <div class="flex items-center">
@@ -70,10 +70,10 @@
               </span>
             </div>
           </DropdownMenuTrigger>
-          <DropdownMenuContent class="lg:hidden">
+          <!-- <DropdownMenuContent class="lg:hidden">
             <DropdownMenuItem>+91 78569 78974</DropdownMenuItem>
             <DropdownMenuItem>+91 98765 43210</DropdownMenuItem>
-          </DropdownMenuContent>
+          </DropdownMenuContent> -->
         </DropdownMenu>
       </div>
       <div class="items-center hidden md:flex">

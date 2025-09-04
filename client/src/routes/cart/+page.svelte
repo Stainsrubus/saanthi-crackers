@@ -167,6 +167,7 @@
   function confirmCancel() {
     isConfirmationDialogOpen = false;
     isDialogOpen = false;
+    isPaying = false;
     clearPreviews();
   }
 
@@ -512,30 +513,31 @@
     }
   }
 
-  async function handlePayNow() {
-    isPaying = true;
+ async function handlePayNow() {
+  if (isPaying) return; // prevent double click
+  isPaying = true;
 
-    if (!primaryAddress) {
-      toast.error('Please select a delivery address');
-      isPaying = false;
-      return;
-    }
-
-    if (cartItems.length === 0) {
-      toast.error('Your cart is empty');
-      isPaying = false;
-      return;
-    }
-
-    try {
-      await validateStock();
-      isDialogOpen = true;
-    } catch (error: any) {
-      console.error('Validation error:', error);
-      toast.error(error.message || 'Failed to validate cart');
-      isPaying = false;
-    }
+  if (!primaryAddress) {
+    toast.error("Please select a delivery address");
+    isPaying = false;
+    return;
   }
+
+  if (cartItems.length === 0) {
+    toast.error("Your cart is empty");
+    isPaying = false;
+    return;
+  }
+
+  try {
+    await validateStock();
+    isDialogOpen = true; // keep isPaying = true while modal is open
+  } catch (error: any) {
+    console.error("Validation error:", error);
+    toast.error(error.message || "Failed to validate cart");
+    isPaying = false;
+  }
+}
 
   function updateQuantity(productId: string, change: number, stock: number) {
     const item = cartItems.find((item) => item.productId._id === productId);
@@ -575,18 +577,17 @@
     });
   }
 
-  function handleUploadAndPlaceOrder() {
-    if (selectedFiles.length === 0) {
-      toast.error('Please upload at least one payment receipt');
-      return;
-    }
-
-    isUploading = true;
-    $placeOrderMutation.mutate({
-      addressId: primaryAddress?._id || '',
-      paymentImages: selectedFiles
-    });
+  async function handleUploadAndPlaceOrder() {
+  try {
+    await handlePayNow();
+    isDialogOpen = false;
+    isPaying = false;   
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to place order");
+    isPaying = false;   
   }
+}
 </script>
 
 <div class="fixed bottom-4 right-4 z-50 max-w-md w-full space-y-2">
