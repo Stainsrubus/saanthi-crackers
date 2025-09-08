@@ -129,6 +129,7 @@
   $: cartData = $cartQuery.data;
   $: cartItems = showShimmer ? [] : (cartData?.cart?.products || []);
   $: isCartLoading = showShimmer || $cartQuery.isLoading;
+  $: isUpdatingQuantity = $updateQuantityMutation.isPending;
   $: isAddressesLoading = showShimmer || $addressesQuery.isLoading;
   $: error = $cartQuery.error ? ($cartQuery.error as Error).message : null;
   $: primaryAddress = showShimmer ? null : ($addressesQuery.data?.find((address) => address.isPrimary) || null);
@@ -539,32 +540,52 @@
   }
 }
 
-  function updateQuantity(productId: string, change: number, stock: number) {
-    const item = cartItems.find((item) => item.productId._id === productId);
+  let loadingProductId: string | null = null;
 
-    if (item) {
-      let newQuantity;
-      const minQuantity = item.selectedOffer?.offerType === 'Negotiate' && item.productId.negMOQ
+function updateQuantity(productId: string, change: number, stock: number) {
+  const item = cartItems.find((item) => item.productId._id === productId);
+
+  if (item) {
+    let newQuantity;
+    const minQuantity =
+      item.selectedOffer?.offerType === "Negotiate" && item.productId.negMOQ
         ? item.productId.negMOQ
         : 1;
 
-      newQuantity = item.quantity + change;
+    newQuantity = item.quantity + change;
+    console.log("Updating quantity for", productId, "from", item.quantity, "to", newQuantity);
 
-      if (newQuantity < minQuantity) {
-        toast.error(`Minimum order quantity for ${item.productId.productName} is ${minQuantity}.`);
-        return;
-      }
-
-      if (newQuantity > stock) {
-        toast.error(`Only ${stock} units of ${item.productId.productName} are available in stock. Please modify the quantity and proceed.`);
-        return;
-      }
-
-      item.quantity = newQuantity;
-      item.totalAmount = item.price * newQuantity;
-      $updateQuantityMutation.mutate({ productId, quantity: newQuantity });
+    if (newQuantity < minQuantity) {
+      toast.error(
+        `Minimum order quantity for ${item.productId.productName} is ${minQuantity}.`
+      );
+      return;
     }
+
+    if (newQuantity > stock) {
+      toast.error(
+        `Only ${stock} units of ${item.productId.productName} are available in stock. Please modify the quantity and proceed.`
+      );
+      return;
+    }
+
+    // Optimistic UI update
+    item.quantity = newQuantity;
+    item.totalAmount = item.price * newQuantity;
+
+    // mark this product as loading
+    loadingProductId = productId;
+
+    $updateQuantityMutation.mutate({ productId, quantity: newQuantity }, {
+      onSettled: () => {
+        // keep disabled for 2s after mutation finishes
+        setTimeout(() => {
+          loadingProductId = null;
+        }, 2000);
+      }
+    });
   }
+}
 
   function removeProduct(productId: string) {
     cartItems = cartItems.filter((item) => item.productId._id !== productId);
@@ -743,15 +764,27 @@
                   ${item.productId.stock === 0 ? 'bg-primary/10 border-[#30363c6d]' : 'bg-primary/10 border-primary'}
                 `}
               >
-                <button
-                  onclick={() => updateQuantity(item.productId._id, -1, item.productId.stock)}
-                  class={`w-7.5 h-7.5 pl-2 border-gray-300 text-base flex items-center justify-center
-                    ${item.quantity <= (item.selectedOffer?.offerType === 'Negotiate' && item.productId.negMOQ ? item.productId.negMOQ : 1) || item.productId.stock === 0 ? 'text-[#30363c6d] cursor-not-allowed' : 'text-primary cursor-pointer'}
-                  `}
-                  disabled={$updateQuantityMutation.isPending || item.quantity <= (item.selectedOffer?.offerType === 'Negotiate' && item.productId.negMOQ ? item.productId.negMOQ : 1) || item.productId.stock === 0}
-                >
-                  -
-                </button>
+               <button
+  onclick={() => updateQuantity(
+    item.productId._id,
+    -1,
+    item.productId.stock
+  )}
+  disabled={
+    item.quantity <= (item.selectedOffer?.offerType === 'Negotiate' && item.productId.negMOQ
+      ? item.productId.negMOQ
+      : 1) || item.productId.stock === 0 || isUpdatingQuantity
+  }
+  class={`w-7.5 h-7.5 pl-2 border-gray-300 text-base flex items-center justify-center
+    ${item.quantity <= (item.selectedOffer?.offerType === 'Negotiate' && item.productId.negMOQ
+      ? item.productId.negMOQ
+      : 1) || item.productId.stock === 0 || isUpdatingQuantity
+      ? 'text-[#30363c6d] cursor-not-allowed'
+      : 'text-primary cursor-pointer'}
+  `}
+>
+  -
+</button>
                 <span
                   class={`w-7.5 text-center text-sm
                     ${item.productId.stock === 0 ? 'text-[#30363c6d]' : 'text-[#4F585E]'}
@@ -760,14 +793,20 @@
                   {item.quantity}
                 </span>
                 <button
-                  onclick={() => updateQuantity(item.productId._id, 1, item.productId.stock)}
-                  class={`w-7.5 h-7.5 pr-2 border-gray-300 text-base flex items-center justify-center
-                    ${item.productId.stock === 0 ? 'text-[#30363c6d] cursor-not-allowed' : 'text-primary cursor-pointer'}
-                  `}
-                  disabled={$updateQuantityMutation.isPending || item.productId.stock === 0}
-                >
-                  +
-                </button>
+  onclick={() => updateQuantity(
+    item.productId._id,
+    1,
+    item.productId.stock
+  )}
+  disabled={item.productId.stock === 0 || isUpdatingQuantity}
+  class={`w-7.5 h-7.5 pr-2 border-gray-300 text-base flex items-center justify-center
+    ${item.productId.stock === 0 || isUpdatingQuantity
+      ? 'text-[#30363c6d] cursor-not-allowed'
+      : 'text-primary cursor-pointer'}
+  `}
+>
+  +
+</button>
               </div>
             </div>
             <button
@@ -870,31 +909,54 @@
                 ${item.productId.stock === 0 ? 'bg-[#e9e9eace] border-[#30363c6d]' : 'bg-[#F3FBFF] border-priimary'}
               `}
             >
-              <button
-                onclick={() => updateQuantity(item.productId._id, -1, item.productId.stock)}
-                class={`w-7.5 h-7.5 pl-2 border-gray-300 text-base flex items-center justify-center
-                  ${item.quantity <= (item.selectedOffer?.offerType === 'Negotiate' && item.productId.negMOQ ? item.productId.negMOQ : 1) || item.productId.stock === 0 ? 'text-[#30363c6d] cursor-not-allowed' : 'text-[#01A0E2] cursor-pointer'}
-                `}
-                disabled={$updateQuantityMutation.isPending || item.quantity <= (item.selectedOffer?.offerType === 'Negotiate' && item.productId.negMOQ ? item.productId.negMOQ : 1) || item.productId.stock === 0}
-              >
-                -
-              </button>
-              <span
-                class={`w-7.5 text-center text-sm
-                  ${item.productId.stock === 0 ? 'text-[#30363c6d]' : 'text-[#4F585E]'}
-                `}
-              >
-                {item.quantity}
-              </span>
-              <button
-                onclick={() => updateQuantity(item.productId._id, 1, item.productId.stock)}
-                class={`w-7.5 h-7.5 pr-2 border-gray-300 text-base flex items-center justify-center
-                  ${item.productId.stock === 0 ? 'text-[#30363c6d] cursor-not-allowed' : 'text-primary cursor-pointer'}
-                `}
-                disabled={$updateQuantityMutation.isPending || item.productId.stock === 0}
-              >
-                +
-              </button>
+             <button
+  onclick={() => updateQuantity(item.productId._id, -1, item.productId.stock)}
+  disabled={
+    loadingProductId === item.productId._id ||
+    item.quantity <= (
+      item.selectedOffer?.offerType === 'Negotiate' && item.productId.negMOQ
+        ? item.productId.negMOQ
+        : 1
+    ) ||
+    item.productId.stock === 0
+  }
+  class={`w-7.5 h-7.5 pl-2 border-gray-300 text-base flex items-center justify-center
+    ${
+      loadingProductId === item.productId._id ||
+      item.quantity <= (
+        item.selectedOffer?.offerType === 'Negotiate' && item.productId.negMOQ
+          ? item.productId.negMOQ
+          : 1
+      ) ||
+      item.productId.stock === 0
+        ? 'text-[#30363c6d] cursor-not-allowed'
+        : 'text-primary cursor-pointer'
+    }
+  `}
+>
+  -
+</button>
+
+<span
+  class={`w-7.5 text-center text-sm
+    ${item.productId.stock === 0 ? 'text-[#30363c6d]' : 'text-[#4F585E]'}
+  `}
+>
+  {item.quantity}
+</span>
+
+<button
+  onclick={() => updateQuantity(item.productId._id, 1, item.productId.stock)}
+  disabled={loadingProductId === item.productId._id || item.productId.stock === 0}
+  class={`w-7.5 h-7.5 pr-2 border-gray-300 text-base flex items-center justify-center
+    ${loadingProductId === item.productId._id || item.productId.stock === 0
+      ? 'text-[#30363c6d] cursor-not-allowed'
+      : 'text-primary cursor-pointer'}
+  `}
+>
+  +
+</button>
+
             </div>
             <div style="width: 5%;" class="remove flex items-center justify-center">
               <button
