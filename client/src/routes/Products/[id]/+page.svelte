@@ -49,22 +49,26 @@
 
   let cartQuantity = 0;
   let desiredQuantity = 1;
-  let quantity = desiredQuantity;
+  let quantity = 1;
 
   $: if (productId) {
     isInitialLoading = false;
   }
 
   $: if ($cartQuery.data?.cart?.products && isInitialLoading) {
-    const foundItem = $cartQuery.data.cart.products.find(
-      (item:any) => item.productId._id === productId
-    );
-    cartQuantity = foundItem ? foundItem.quantity : 0;
-    if (desiredQuantity !== cartQuantity && isInitialLoading) {
-      desiredQuantity = cartQuantity;
-      quantity = desiredQuantity;
-    }
+  const foundItem = $cartQuery.data.cart.products.find(
+    (item: any) => item.productId._id === productId
+  );
+
+  cartQuantity = foundItem ? foundItem.quantity : 0;
+
+  if (isInitialLoading) {
+    // if product not in cart, show 1 instead of 0
+    desiredQuantity = cartQuantity > 0 ? cartQuantity : 1;
+    quantity = desiredQuantity;
   }
+}
+
 
   $: desiredQuantity = quantity;
 
@@ -247,14 +251,14 @@
   });
 
   const handleQuantityChange = (type: string) => {
-    if (!$productQuery.data) return;
-    if (type === 'increment' && quantity < $productQuery.data.stock) {
-      quantity += 1;
-    } else if (type === 'decrement' && quantity > 1) {
-      quantity -= 1;
-    }
-    desiredQuantity = quantity;
-  };
+  if (!$productQuery.data) return;
+  if (type === "increment" && quantity < $productQuery.data.stock) {
+    quantity += 1;
+  } else if (type === "decrement" && quantity > 1) {
+    quantity -= 1;
+  }
+  desiredQuantity = quantity;
+};
 
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, index) => ({
@@ -474,23 +478,34 @@ $: if ($productQuery.data?.description) {
             </span>
           </div>
           <!-- Price -->
-          <div class="flex items-center gap-4 mb-4 flex-wrap">
-            {#if $productQuery.data.gst <= 0}
-              <span class="text-green-700 text-sm">Inclusive GST</span>
-            {/if}
-            {#if $productQuery.data.discount}
-              <span class="text-3xl font-bold text-gray-900">₹{Math.round($productQuery.data.MRP - ($productQuery.data.MRP * ($productQuery.data.discount || 0) / 100))}</span>
-            {/if}
-            <span class="text-xl line-through text-gray-700">
-              ₹{$productQuery.data.MRP.toLocaleString()}
-            </span>
-            <span>/ {$productQuery.data.unit?.name}</span>
-            {#if discountPercentage > 0}
-              <span class="px-2 py-1 bg-green-100 text-green-800 text-sm font-medium rounded">
-                {discountPercentage}% OFF
-              </span>
-            {/if}
-          </div>
+         <div class="flex items-center gap-4 mb-4 flex-wrap">
+  {#if $productQuery.data.gst <= 0}
+    <span class="text-green-700 text-sm">Inclusive GST</span>
+  {/if}
+
+  {#if $productQuery.data.discount > 0}
+    <!-- ✅ Discounted price -->
+    <span class="text-3xl font-bold text-gray-900">
+      ₹{Math.round($productQuery.data.MRP - ($productQuery.data.MRP * ($productQuery.data.discount || 0) / 100))}
+    </span>
+    <!-- ✅ Show strike-through MRP only if discount -->
+    <span class="text-xl line-through text-gray-700">
+      ₹{$productQuery.data.MRP.toLocaleString()}
+    </span>
+    <span>/ {$productQuery.data.unit?.name}</span>
+
+    <!-- <span class="px-2 py-1 bg-green-100 text-green-800 text-sm font-medium rounded">
+      {discountPercentage}% OFF
+    </span> -->
+  {:else}
+    <!-- ✅ No discount → just show actual price -->
+    <span class="text-3xl font-bold text-gray-900">
+      ₹{$productQuery.data.MRP.toLocaleString()}
+    </span>
+    <span>/ {$productQuery.data.unit?.name}</span>
+  {/if}
+</div>
+
           <!-- Action Buttons -->
           <div class="flex gap-3 mt-6 w-full">
             <div class="flex items-center border rounded-lg">
@@ -571,8 +586,17 @@ $: if ($productQuery.data?.description) {
                   {$productQuery.data.ytLink.includes('/shorts/') ? 'Watch Shorts Video' : 'Watch Video Preview'}
                 </Dialog.Trigger>
                 <Dialog.Content class={$productQuery.data.ytLink.includes('/shorts/') ? "sm:max-w-[500px] w-[95vw] max-h-[90vh] bg-transparent border-0" : "sm:max-w-[900px] w-[95vw] max-h-[90vh] bg-transparent border-0"}>
-                  <Dialog.Header class="pb-4">
-                  </Dialog.Header>
+                  <Dialog.Header class="pb-4 flex justify-end">
+  <button
+    onclick={() => isVideoDialogOpen = false}
+    class="absolute top-3 right-3 z-50 flex items-center justify-center 
+           w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 
+           text-white transition transform hover:scale-110 shadow-lg"
+    aria-label="Close"
+  >
+    ✕
+  </button>
+</Dialog.Header>
                   <div class="relative w-full bg-black rounded-lg overflow-hidden">
                     {#if getYouTubeEmbedUrl($productQuery.data.ytLink)}
                       {#if $productQuery.data.ytLink.includes('/shorts/')}
