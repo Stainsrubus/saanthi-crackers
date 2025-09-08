@@ -4,7 +4,7 @@ import { z } from 'zod';
 export const employeeStore = writable({
 	mode: 'list',
 	name: '',
-	email: '',
+	// email: '',
 	joinedAt: '',
 	password: '',
 	id: ''
@@ -13,7 +13,7 @@ export const employeeStore = writable({
 type StoreProps = {
 	mode: string;
 	name: string;
-	email: string;
+	// email: string;
 	joinedAt: string;
 	password: string;
 	id: string;

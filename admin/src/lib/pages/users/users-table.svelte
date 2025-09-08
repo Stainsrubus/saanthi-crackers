@@ -147,7 +147,7 @@
 					<Table.Head class="w-[100px]">Sl.No</Table.Head>
 					<Table.Head>User Name</Table.Head>
 					<Table.Head class="cursor-pointer">Mobile</Table.Head>
-					<Table.Head>Email</Table.Head>
+					<!-- <Table.Head>Email</Table.Head> -->
 					<Table.Head>Joined At</Table.Head>
 					<Table.Head>Active</Table.Head>
 				</Table.Row>
@@ -180,7 +180,7 @@
 							</button>
 						</Table.Cell>
 						<Table.Cell>{user.mobile}</Table.Cell>
-						<Table.Cell>{user.email || '-'}</Table.Cell>
+						<!-- <Table.Cell>{user.email || '-'}</Table.Cell> -->
 						<Table.Cell>{formatDate(user.createdAt)}</Table.Cell>
 						<Table.Cell>{user.active ? 'Yes' : 'No'}</Table.Cell>
 					</Table.Row>

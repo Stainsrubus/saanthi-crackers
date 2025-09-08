@@ -109,7 +109,7 @@
 				<Table.Row class="">
 					<Table.Head class="w-[100px]">Sl.No</Table.Head>
 					<Table.Head>Username</Table.Head>
-					<Table.Head>Email</Table.Head>
+					<!-- <Table.Head>Email</Table.Head> -->
 					<Table.Head class="">Joined At</Table.Head>
 					<Table.Head class="">Active</Table.Head>
 					<Table.Head>Actions</Table.Head>
@@ -120,7 +120,7 @@
 					<Table.Row>
 						<Table.Cell>{i + 1}</Table.Cell>
 						<Table.Cell>{employee.name}</Table.Cell>
-						<Table.Cell>{employee.email}</Table.Cell>
+						<!-- <Table.Cell>{employee.email}</Table.Cell> -->
 						<Table.Cell class="flex items-center"
 							>{formatDate(new Date(employee.createdAt))}</Table.Cell
 						>
@@ -142,7 +142,7 @@
 									$employeeStore = {
 										id: employee._id,
 										name: employee.name,
-										email: employee.email,
+										// email: employee.email,
 										mode: 'create',
 										password: employee.password,
 										joinedAt: formatDate(new Date(employee.createdAt))
@@ -161,23 +161,27 @@
 			</Table.Body>
 		</Table.Root>
 
-		<Dialog.Root controlledOpen={true} open={modelOpen} onOpenChange={(e) => (modelOpen = e)}>
-			<Dialog.Content class="p-6">
-				<Dialog.Header class="text-center">
-					<Dialog.Title class="text-center">Do you want to delete this Employee ?</Dialog.Title>
-				</Dialog.Header>
+		<Dialog.Root open={modelOpen} onOpenChange={(e) => (modelOpen = e)}>
+	<Dialog.Content class="p-6">
+		<Dialog.Header class="text-center">
+			<Dialog.Title class="text-center">
+				Do you want to delete this Employee ?
+			</Dialog.Title>
+		</Dialog.Header>
 
-				<div class="flex gap-4 justify-around">
-					<Button
-						class="bg-red-500 text-white font-bold w-full hover:bg-red-400"
-						onclick={() => $deleteMutation.mutate({ id: selectedEmployeeId, permanent: true })}
-						>Yes</Button
-					>
-					<Button class="text-white font-bold w-full" onclick={() => (modelOpen = false)}>No</Button
-					>
-				</div>
-			</Dialog.Content>
-		</Dialog.Root>
+		<div class="flex gap-4 justify-around">
+			<Button
+				class="bg-red-500 text-white font-bold w-full hover:bg-red-400"
+				onclick={() => $deleteMutation.mutate({ id: selectedEmployeeId, permanent: true })}
+			>
+				Yes
+			</Button>
+			<Button class="text-white font-bold w-full" onclick={() => (modelOpen = false)}>
+				No
+			</Button>
+		</div>
+	</Dialog.Content>
+</Dialog.Root>
 
 		{#if !$query.isLoading && $query?.data?.total > 0}
 			<Paginator

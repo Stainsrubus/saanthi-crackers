@@ -3,6 +3,7 @@
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { createMutation, createQuery } from '@tanstack/svelte-query';
 	import { onMount } from 'svelte';
+	import { toast } from 'svelte-sonner';
 
 	async function fetchTermsandConditions() {
 		const res = await _axios.get('/termsandconditions');
@@ -16,8 +17,14 @@
 	});
 
 	const updateTerms = createMutation({
-		mutationFn: (data: any) => _axios.post('/termsandconditions/update', data)
-	});
+	mutationFn: (data: any) => _axios.post('/termsandconditions/update', data),
+	onSuccess({ data }) {
+		toast.success(data?.message ?? 'Terms & Conditions updated successfully!');
+	},
+	onError(error: any) {
+		toast.error(error?.message ?? 'Failed to update Terms & Conditions');
+	}
+});
 
 	let quill = $state<any>(null);
 	let loading = $state<boolean>(true);
@@ -65,12 +72,12 @@
 			<div id="editor" class="overflow-y-auto"></div>
 
 			<Button class="mt-4" disabled={$updateTerms.isPending} onclick={handleSave}>
-				{#if !$updateTerms.isPending}
-					<span>Save</span>
-				{:else}
-					<span>Updating...</span>
-				{/if}
-			</Button>
+	{#if !$updateTerms.isPending}
+		<span>Save</span>
+	{:else}
+		<span>Updating...</span>
+	{/if}
+</Button>
 		{/if}
 	</div>
 </div>
