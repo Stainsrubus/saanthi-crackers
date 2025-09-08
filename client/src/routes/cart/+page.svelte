@@ -151,6 +151,13 @@
     return flatOfferItems.length === 1;
   })();
 
+  let fileInput: HTMLInputElement | null = null;
+
+function resetFileInput() {
+  if (fileInput) {
+    fileInput.value = ""; // clears previous selection
+  }
+}
   async function copyToClipboard(text: string, label: string) {
     try {
       await navigator.clipboard.writeText(text);
@@ -166,6 +173,9 @@
   }
 
   function confirmCancel() {
+    resetFileInput();
+    previewImages = [];
+    selectedFiles = [];
     isConfirmationDialogOpen = false;
     isDialogOpen = false;
     isPaying = false;
@@ -531,14 +541,15 @@
   }
 
   try {
-    await validateStock();
-    isDialogOpen = true; // keep isPaying = true while modal is open
+    await validateStock();       // just stock validation
+    isDialogOpen = true;         // open modal
   } catch (error: any) {
     console.error("Validation error:", error);
     toast.error(error.message || "Failed to validate cart");
     isPaying = false;
   }
 }
+
 
   let loadingProductId: string | null = null;
 
@@ -600,15 +611,36 @@ function updateQuantity(productId: string, change: number, stock: number) {
 
   async function handleUploadAndPlaceOrder() {
   try {
-    await handlePayNow();
+    if (!primaryAddress) {
+      toast.error("Please select a delivery address");
+      return;
+    }
+    if (selectedFiles.length === 0) {
+      toast.error("Please upload at least one payment image");
+      return;
+    }
+
+    // ✅ Call your mutation here
+    await $placeOrderMutation.mutateAsync({
+      addressId: primaryAddress._id,
+      paymentImages: selectedFiles
+    });
+
+    // ✅ Reset state after success
+    resetFileInput();
+    previewImages = [];
+    selectedFiles = [];
     isDialogOpen = false;
-    isPaying = false;   
-  } catch (err) {
-    console.error(err);
-    toast.error("Failed to place order");
-    isPaying = false;   
+    isPaying = false;
+
+  } catch (err: any) {
+    console.error("Place order error:", err);
+    toast.error(err.message || "Failed to place order");
+    isPaying = false;
   }
 }
+
+
 </script>
 
 <div class="fixed bottom-4 right-4 z-50 max-w-md w-full space-y-2">
@@ -1142,6 +1174,7 @@ function updateQuantity(productId: string, change: number, stock: number) {
                       id="file-upload"
                       type="file"
                       accept="image/jpeg,image/png,application/pdf"
+                      bind:this={fileInput}
                       onchange={handleFileChange}
                       class="hidden"
                       multiple
