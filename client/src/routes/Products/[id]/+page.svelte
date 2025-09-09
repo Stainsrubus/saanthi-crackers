@@ -1,7 +1,7 @@
 <script lang="ts">
   import { createMutation, createQuery } from '@tanstack/svelte-query';
   import { queryClient } from "$lib/query-client";
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { page } from '$app/stores';
   import { Star, Heart, ShoppingCart, Minus, Plus, Truck, Shield, RefreshCw, ShoppingBag } from 'lucide-svelte';
   import { _axios } from '$lib/_axios';
@@ -11,7 +11,7 @@
   import { toast } from 'svelte-sonner';
   import * as Dialog from '$lib/components/ui/dialog/index.js';
   import { Button, buttonVariants } from "$lib/components/ui/button/index.js";
-	import { goto } from '$app/navigation';
+  import { goto } from '$app/navigation';
 
   // Component state
   let selectedImage = 0;
@@ -20,8 +20,9 @@
   let isFavorite = false;
   let descriptionRef: HTMLParagraphElement | null;
   let showViewMore = false;
-  let isInitialLoading = false;
+  let isInitialLoad = true; // Initialize as true to show skeleton initially
   let productId: string | null = null;
+  let previousProductId: string | null = null;
 
   // Improved YouTube embed function
   function getYouTubeEmbedUrl(url: string) {
@@ -49,26 +50,22 @@
 
   let cartQuantity = 0;
   let desiredQuantity = 1;
-  let quantity = 1;
+  let quantity = desiredQuantity;
 
-  $: if (productId) {
-    isInitialLoading = false;
+  $: if ($cartQuery.data?.cart?.products && isInitialLoad) {
+    const foundItem = $cartQuery.data.cart.products.find(
+      (item: any) => item.productId._id === productId
+    );
+    if (foundItem) {
+      cartQuantity = foundItem.quantity;
+      quantity = foundItem.quantity;
+      desiredQuantity = foundItem.quantity;
+    } else {
+      cartQuantity = 0;
+      quantity = 1; // Set to 1 if product is not in cart
+      desiredQuantity = 1; // Set to 1 if product is not in cart
+    }
   }
-
-  $: if ($cartQuery.data?.cart?.products && isInitialLoading) {
-  const foundItem = $cartQuery.data.cart.products.find(
-    (item: any) => item.productId._id === productId
-  );
-
-  cartQuantity = foundItem ? foundItem.quantity : 0;
-
-  if (isInitialLoading) {
-    // if product not in cart, show 1 instead of 0
-    desiredQuantity = cartQuantity > 0 ? cartQuantity : 1;
-    quantity = desiredQuantity;
-  }
-}
-
 
   $: desiredQuantity = quantity;
 
@@ -135,28 +132,45 @@
     const autoplayParam = autoplay ? '&autoplay=1' : '&autoplay=0';
     return `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&showinfo=0&controls=1${autoplayParam}`;
   }
+
   const checkOverflow = () => {
-      if (descriptionRef) {
-        const { scrollHeight, offsetHeight } = descriptionRef;
-        showViewMore = scrollHeight > offsetHeight;
-      }
-    };
+    if (descriptionRef) {
+      const { scrollHeight, offsetHeight } = descriptionRef;
+      showViewMore = scrollHeight > offsetHeight;
+    }
+  };
+
   onMount(() => {
     productId = $page.params.id;
+    isInitialLoad = true; // Show skeleton on initial mount
     if (productId) {
+      queryClient.invalidateQueries({ queryKey: ['product', productId] });
       $productQuery.refetch();
     }
-    
     checkOverflow();
     window.addEventListener('resize', checkOverflow);
     return () => window.removeEventListener('resize', checkOverflow);
   });
 
-  $: productId = $page.params.id;
+  onDestroy(() => {
+    queryClient.cancelQueries({ queryKey: ['product'] });
+  });
+
+  // Reactive block to handle product ID changes
   $: {
-    if (productId) {
-      $productQuery.refetch();
-      isInitialLoading = true;
+    const currentProductId = $page.params.id;
+    if (productId !== currentProductId) {
+      isInitialLoad = true; // Show skeleton when product ID changes
+      selectedImage = 0; // Reset selected image
+      quantity = 1; // Reset quantity
+      desiredQuantity = 1; // Reset desired quantity
+      isFavorite = false; // Reset favorite state
+      productId = currentProductId;
+      queryClient.invalidateQueries({ queryKey: ['product', productId] });
+      previousProductId = productId;
+    }
+    if ($productQuery.data) {
+      isInitialLoad = false; // Hide skeleton once data is loaded
     }
   }
 
@@ -174,11 +188,9 @@
           headers: { 'Content-Type': 'application/json' },
         });
         if (!response.data.status) {
-          isInitialLoading=true;
           throw new Error(response.data.message || 'Failed to fetch product');
         }
         const product = response.data.data;
-        isInitialLoading=false
         return {
           id: product._id,
           name: product.productName,
@@ -209,7 +221,7 @@
     },
     enabled: !!productId,
     staleTime: 0,
-    refetchOnMount: true,
+    refetchOnMount: 'always',
     refetchOnReconnect: true,
     refetchOnWindowFocus: true,
     retry: 2,
@@ -251,14 +263,14 @@
   });
 
   const handleQuantityChange = (type: string) => {
-  if (!$productQuery.data) return;
-  if (type === "increment" && quantity < $productQuery.data.stock) {
-    quantity += 1;
-  } else if (type === "decrement" && quantity > 1) {
-    quantity -= 1;
-  }
-  desiredQuantity = quantity;
-};
+    if (!$productQuery.data) return;
+    if (type === 'increment' && quantity < $productQuery.data.stock) {
+      quantity += 1;
+    } else if (type === 'decrement' && quantity > 1) {
+      quantity -= 1;
+    }
+    desiredQuantity = quantity;
+  };
 
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, index) => ({
@@ -279,6 +291,7 @@
     if (!$productQuery.data) return;
     $addToCartMutation.mutate();
   };
+
   const buyNowMutation = createMutation({
     mutationFn: async () => {
       const token = localStorage.getItem('token');
@@ -307,7 +320,6 @@
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cartCount'] });
-      // Navigate to cart page after successful addition
       goto('/cart');
     },
     onError: (error) => {
@@ -322,13 +334,13 @@
 
   $: visibleSpecs = showAllSpecs && $productQuery.data ? $productQuery.data.specifications : ($productQuery.data?.specifications || []).slice(0, 2);
   $: discountPercentage = $productQuery.data ? Math.round((($productQuery.data.strikePrice - $productQuery.data.MRP) / $productQuery.data.strikePrice) * 100) : 0;
-$: if ($productQuery.data?.description) {
+  $: if ($productQuery.data?.description) {
     setTimeout(checkOverflow, 50);
   }
 </script>
 
 <main class="lg:!mx-20 md:mx-10 mx-4 py-8 max-w-screen-2xl scrollbar-hide">
-  {#if $productQuery.isLoading || !$productQuery.data}
+  {#if isInitialLoad || $productQuery.isLoading || !$productQuery.data}
     <!-- Skeleton for initial load or query loading -->
     <div class="flex flex-col md:flex-row gap-8 lg:gap-12">
       <!-- Image Gallery - Sticky -->
@@ -478,34 +490,23 @@ $: if ($productQuery.data?.description) {
             </span>
           </div>
           <!-- Price -->
-         <div class="flex items-center gap-4 mb-4 flex-wrap">
-  {#if $productQuery.data.gst <= 0}
-    <span class="text-green-700 text-sm">Inclusive GST</span>
-  {/if}
-
-  {#if $productQuery.data.discount > 0}
-    <!-- ✅ Discounted price -->
-    <span class="text-3xl font-bold text-gray-900">
-      ₹{Math.round($productQuery.data.MRP - ($productQuery.data.MRP * ($productQuery.data.discount || 0) / 100))}
-    </span>
-    <!-- ✅ Show strike-through MRP only if discount -->
-    <span class="text-xl line-through text-gray-700">
-      ₹{$productQuery.data.MRP.toLocaleString()}
-    </span>
-    <span>/ {$productQuery.data.unit?.name}</span>
-
-    <!-- <span class="px-2 py-1 bg-green-100 text-green-800 text-sm font-medium rounded">
-      {discountPercentage}% OFF
-    </span> -->
-  {:else}
-    <!-- ✅ No discount → just show actual price -->
-    <span class="text-3xl font-bold text-gray-900">
-      ₹{$productQuery.data.MRP.toLocaleString()}
-    </span>
-    <span>/ {$productQuery.data.unit?.name}</span>
-  {/if}
-</div>
-
+          <div class="flex items-center gap-4 mb-4 flex-wrap">
+            {#if $productQuery.data.gst <= 0}
+              <span class="text-green-700 text-sm">Inclusive GST</span>
+            {/if}
+            {#if $productQuery.data.discount}
+              <span class="text-3xl font-bold text-gray-900">₹{Math.round($productQuery.data.MRP - ($productQuery.data.MRP * ($productQuery.data.discount || 0) / 100))}</span>
+            {/if}
+            <span class="text-xl line-through text-gray-700">
+              ₹{$productQuery.data.MRP.toLocaleString()}
+            </span>
+            <span>/ {$productQuery.data.unit?.name}</span>
+            {#if discountPercentage > 0}
+              <span class="px-2 py-1 bg-green-100 text-green-800 text-sm font-medium rounded">
+                {discountPercentage}% OFF
+              </span>
+            {/if}
+          </div>
           <!-- Action Buttons -->
           <div class="flex gap-3 mt-6 w-full">
             <div class="flex items-center border rounded-lg">
@@ -525,43 +526,42 @@ $: if ($productQuery.data?.description) {
                 <Plus class="w-4 h-4" />
               </button>
             </div>
- 
           </div>
           <div class="flex gap-4 py-3">
             <button
-            onclick={handleAddToCart}
-            class="custom-button   !w-fit hover:shadow-lg text-white py-3 px-6 rounded-lg hover:scale-95 duration-500 transition-all flex items-center justify-center gap-2 font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
-            disabled={!$productQuery.data || $productQuery.data.stock === 0 || $addToCartMutation.isPending}
-          >
-            {#if $addToCartMutation.isPending}
-              <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Adding...
-            {:else}
-              <ShoppingCart class="w-5 h-5" />
-              {$productQuery.data?.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+              onclick={handleAddToCart}
+              class="custom-button !w-fit hover:shadow-lg text-white py-3 px-6 rounded-lg hover:scale-95 duration-500 transition-all flex items-center justify-center gap-2 font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+              disabled={!$productQuery.data || $productQuery.data.stock == 0 || $addToCartMutation.isPending}
+            >
+              {#if $addToCartMutation.isPending}
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Adding...
+              {:else}
+                <ShoppingCart class="w-5 h-5" />
+                {$productQuery.data?.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+              {/if}
+            </button>
+            {#if $productQuery.data?.stock > 0}
+              <button
+                onclick={handleBuyNow}
+                class="bg-transparent shadow-[0_4px_0px_0px_#b30000] border-[#f7c079] border-dashed border !w-fit hover:shadow-lg text-red-700 py-3 px-6 rounded-lg hover:scale-95 duration-500 transition-all flex items-center justify-center gap-2 font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+                disabled={!$productQuery.data || $productQuery.data.stock == 0 || $buyNowMutation.isPending}
+              >
+                {#if $buyNowMutation.isPending}
+                  <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing...
+                {:else}
+                  <ShoppingBag class="w-5 h-5" />
+                  Buy Now
+                {/if}
+              </button>
             {/if}
-          </button>
-          {#if $productQuery.data?.stock > 0}
-          <button
-          onclick={handleBuyNow}
-          class="bg-transaparent shadow-[0_4px_0px_0px_#b30000] border-[#f7c079] border-dashed border !w-fit hover:shadow-lg text-red-700 py-3 px-6 rounded-lg hover:scale-95 duration-500 transition-all flex items-center justify-center gap-2 font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
-          disabled={!$productQuery.data || $productQuery.data.stock === 0 || $buyNowMutation.isPending}
-        >
-        {#if $buyNowMutation.isPending}
-            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Processing...
-          {:else}
-            <ShoppingBag class="w-5 h-5" />
-          Buy Now
-          {/if}
-        </button>
-        {/if}
           </div>
           <!-- Stock Status -->
           <div class="flex items-center gap-2 my-6">
@@ -586,17 +586,8 @@ $: if ($productQuery.data?.description) {
                   {$productQuery.data.ytLink.includes('/shorts/') ? 'Watch Shorts Video' : 'Watch Video Preview'}
                 </Dialog.Trigger>
                 <Dialog.Content class={$productQuery.data.ytLink.includes('/shorts/') ? "sm:max-w-[500px] w-[95vw] max-h-[90vh] bg-transparent border-0" : "sm:max-w-[900px] w-[95vw] max-h-[90vh] bg-transparent border-0"}>
-                  <Dialog.Header class="pb-4 flex justify-end">
-  <button
-    onclick={() => isVideoDialogOpen = false}
-    class="absolute top-3 right-3 z-50 flex items-center justify-center 
-           w-10 h-10 rounded-full bg-black/60 hover:bg-black/80 
-           text-white transition transform hover:scale-110 shadow-lg"
-    aria-label="Close"
-  >
-    ✕
-  </button>
-</Dialog.Header>
+                  <Dialog.Header class="pb-4">
+                  </Dialog.Header>
                   <div class="relative w-full bg-black rounded-lg overflow-hidden">
                     {#if getYouTubeEmbedUrl($productQuery.data.ytLink)}
                       {#if $productQuery.data.ytLink.includes('/shorts/')}

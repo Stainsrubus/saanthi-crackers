@@ -112,97 +112,59 @@ const notificationController = new Elysia({
       try {
         let { title, message, users, type, mode } = body;
   
-        // Validate input
-        if (!title || !message) {
-          set.status = 400;
-          return { message: 'Title and message are required' };
-        }
-  
         if (mode === 'all') {
-          const _users = await User.find({ 
-            active: true, 
-            fcmToken: { $exists: true, $ne: '' } 
-          });
+          const _users = await User.find({ active: true });
           users = _users.map((user) => user._id.toString());
         }
   
-        const results = {
-          total: users.length,
-          success: 0,
-          failures: 0,
-          invalidTokens: 0,
-          details: [] as Array<{
-            userId: string;
-            status: 'success'|'failure'|'invalid_token';
-            error?: string;
-          }>
-        };
-  
-        // Process in batches
-        const BATCH_SIZE = 100;
-        for (let i = 0; i < users.length; i += BATCH_SIZE) {
-          const batch = users.slice(i, i + BATCH_SIZE);
-          
-          await Promise.all(batch.map(async (userId) => {
-            try {
-              const _user = await User.findById(userId);
-              if (!_user?.fcmToken) {
-                results.details.push({ userId, status: 'invalid_token' });
-                results.failures++;
-                results.invalidTokens++;
-                return;
-              }
-  
-              const sent = await sendNotification(_user.fcmToken, title, message, { type })
-                .catch(error => {
-                  throw new Error(`FCM error: ${error.message}`);
-                });
-  
-              if (sent) {
-                await NotificationModel.create({
-                  title,
-                  description: message,
-                  type,
-                  userId: _user._id,
-                });
-                results.success++;
-                results.details.push({ userId, status: 'success' });
-              } else {
-                await User.updateOne({ _id: userId }, { $unset: { fcmToken: '' } });
-                results.failures++;
-                results.invalidTokens++;
-                results.details.push({ userId, status: 'invalid_token' });
-              }
-            } catch (error: any) {
-              results.failures++;
-              results.details.push({
-                userId,
-                status: 'failure',
-                error: error.message
-              });
-              console.error(`Error processing ${userId}:`, error);
+        const userPromises = users.map(async (userId) => {
+          try {
+            const _user = await User.findById(userId);
+            if (!_user || !_user.fcmToken) {
+              console.warn(`No FCM token for user ${userId}`);
+              return null;
             }
-          }));
-        }
   
-        if (results.success === 0) {
+            const sent = await sendNotification(_user.fcmToken, title, message, { type });
+            if (sent) {
+              await NotificationModel.create({
+                title,
+                description: message,
+                type,
+                userId: _user._id,
+              });
+              return { ok: true, userId };
+            } else {
+              // Token invalid; update user to remove token
+              // await User.updateOne({ _id: userId }, { $unset: { fcmToken: '' } });
+              // console.log(`Removed invalid FCM token for user ${userId}`);
+              return null;
+            }
+          } catch (error: any) {
+            console.error(`Error processing user ${userId}:`, error);
+            return null;
+          }
+        });
+  
+        const results = await Promise.all(userPromises);
+        const successfulUsers = results.filter((result) => result?.ok).length;
+  
+        if (successfulUsers === 0) {
           set.status = 400;
           return {
-            message: 'No notifications sent',
-            results
+            message: 'No notifications sent; all tokens invalid or users not found',
           };
         }
   
         return {
-          message: `Notifications processed (${results.success} success, ${results.failures} failures)`,
-          results
+          message: `Notification sent to ${successfulUsers} users`,
+          status: 200,
         };
       } catch (error: any) {
         console.error('Mass notification error:', error);
         set.status = 500;
         return {
-          message: 'Failed to process notifications',
-          error: error.message
+          message: error.message ?? 'Can’t send notification',
         };
       }
     },
@@ -214,7 +176,7 @@ const notificationController = new Elysia({
         type: t.String({ default: 'promotion' }),
         mode: t.String({ default: 'selected' }),
       }),
-    }
+    },
   )
 
 export { notificationController };

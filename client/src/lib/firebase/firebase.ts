@@ -45,9 +45,9 @@ export const onMessageListener = () => {
           } catch (error) {
             console.error('Failed to show notification:', error);
           }
-          if (document.visibilityState === 'visible' && 'Notification' in window && Notification.permission === 'granted') {
-            new Notification(payload.notification.title, notificationOptions);
-          }
+          // if (document.visibilityState === 'visible' && 'Notification' in window && Notification.permission === 'granted') {
+          //   new Notification(payload.notification.title, notificationOptions);
+          // }
         }
 
   

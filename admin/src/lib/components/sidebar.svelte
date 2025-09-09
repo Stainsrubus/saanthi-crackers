@@ -188,7 +188,7 @@ import logo from "$lib/assets/logo.png"
 			<div
 				class="shadow-sm min-h-[50px] cursor-pointer flex gap-2 justify-center items-center"
 			>
-				<img src='/logo.png'  width="180" class="py-2 " alt="">
+				<img src='/logo-white.png'  width="180" class="py-2 " alt="">
 				<!-- <p class="font-bold font-4xl py-5">Jeya Medical Enterprises</p> -->
 			</div>
 		</button>

@@ -61,12 +61,12 @@
 	}
 </script>
 
-<div class='backdrop-blur-lg ' style="background-image: url('/bgp.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat; min-height: 100dvh;">
+<div class='!backdrop-blur-2xl ' style="background-image: url('/bgp.jpg'); background-size: cover; background-position: center; background-repeat: no-repeat; min-height: 100dvh;">
 	<div class="backdrop-blur-sm flex min-h-screen">
 		<!-- Image Container -->
 		<div class="hidden md:flex w-1/2 justify-center items-center">
 			<div class="flex justify-center items-center  rounded-xl">
-				<img src="/logo.png" alt="Logo" class="h-auto w-3/4" />
+				<img src="/logo-white.png" alt="Logo" class="h-auto w-3/4" />
 			</div>
 		</div>
 	

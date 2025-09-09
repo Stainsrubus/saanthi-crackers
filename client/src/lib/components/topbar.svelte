@@ -178,7 +178,7 @@
       try {
         const userId = JSON.parse(userData)?.userId;
         if (!userId) throw new Error('User ID not found');
-        const response = await _axios.get(`/notification?page=${pageParam}&limit=5`, {
+        const response = await _axios.get(`/notification?page=${pageParam}&limit=10`, {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -219,9 +219,11 @@
           response: item.response,
           demand: item?.demand || '',
         })),
-    enabled: false,
+    enabled: $writableGlobalStore.isLogedIn,
     retry: 1,
     staleTime: 30000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
     onError: (error: any) => {
       console.error('Notifications query error:', error.message);
       if (error.message.includes('token') || error.message.includes('log in')) {
@@ -230,10 +232,6 @@
       }
     },
   });
-
-  $: if (!isNotificationDrawerOpen && !hasFetched) {
-    $notificationsQuery.refetch();
-  }
 
   const markAllReadMutation = createMutation({
     mutationFn: async () => {
@@ -354,6 +352,7 @@
   let fileInput: HTMLInputElement;
   let observerTarget: HTMLDivElement | null = null;
   let respondedNotifications: Set<string> = new Set();
+  let observer: IntersectionObserver | null = null;
 
   function closeDropdown() {
     isDropdownOpen = false;
@@ -386,18 +385,6 @@
       }
     };
     document.addEventListener('click', handleOutsideClick);
-    let observer: IntersectionObserver | null = null;
-    if (isNotificationDrawerOpen && observerTarget) {
-      observer = new IntersectionObserver(
-        (entries) => {
-          if (entries[0].isIntersecting && $notificationsQuery.hasNextPage && !$notificationsQuery.isFetchingNextPage) {
-            $notificationsQuery.fetchNextPage();
-          }
-        },
-        { threshold: 0.1 }
-      );
-      observer.observe(observerTarget);
-    }
     return () => {
       document.removeEventListener('click', handleOutsideClick);
       if (toggleTimeout) clearTimeout(toggleTimeout);
@@ -405,9 +392,8 @@
     };
   });
 
-  $: if (isNotificationDrawerOpen && observerTarget) {
-
-    const observer = new IntersectionObserver(
+  $: if (isNotificationDrawerOpen && observerTarget && !observer) {
+    observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && $notificationsQuery.hasNextPage && !$notificationsQuery.isFetchingNextPage) {
           $notificationsQuery.fetchNextPage();
@@ -416,7 +402,9 @@
       { threshold: 0.1 }
     );
     observer.observe(observerTarget);
-    onDestroy(() => observer.unobserve(observerTarget));
+  } else if (!isNotificationDrawerOpen && observer && observerTarget) {
+    observer.unobserve(observerTarget);
+    observer = null;
   }
 
   const updateProfileMutation = createMutation({
