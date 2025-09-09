@@ -525,7 +525,7 @@ function resetFileInput() {
   }
 
  async function handlePayNow() {
-  if (isPaying) return; // prevent double click
+  if (isPaying) return;
   isPaying = true;
 
   if (!primaryAddress) {
@@ -541,8 +541,8 @@ function resetFileInput() {
   }
 
   try {
-    await validateStock();       // just stock validation
-    isDialogOpen = true;         // open modal
+    await validateStock();       
+    isDialogOpen = true;         
   } catch (error: any) {
     console.error("Validation error:", error);
     toast.error(error.message || "Failed to validate cart");
@@ -580,9 +580,14 @@ function updateQuantity(productId: string, change: number, stock: number) {
       return;
     }
 
-    // Optimistic UI update
-    item.quantity = newQuantity;
-    item.totalAmount = item.price * newQuantity;
+  item.quantity = newQuantity;
+  item.totalAmount = item.price * newQuantity;
+  cartItems = [...cartItems];
+
+  // Recalculate totals instantly
+  totalAmount = cartItems.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+  totalDiscount = cartItems.reduce((sum, i) => sum + ((i.productId.discount || 0) * i.quantity), 0);
+  totalPrice = totalAmount + (cartData?.cart?.tax || 0) + (cartData?.deliveryFee || 0) + (cartData?.platformFee || 0) - totalDiscount;
 
     // mark this product as loading
     loadingProductId = productId;
@@ -590,9 +595,9 @@ function updateQuantity(productId: string, change: number, stock: number) {
     $updateQuantityMutation.mutate({ productId, quantity: newQuantity }, {
       onSettled: () => {
         // keep disabled for 2s after mutation finishes
-        setTimeout(() => {
-          loadingProductId = null;
-        }, 2000);
+        // setTimeout(() => {
+        //   loadingProductId = null;
+        // }, 2000);
       }
     });
   }
@@ -797,23 +802,16 @@ function updateQuantity(productId: string, change: number, stock: number) {
                 `}
               >
                <button
-  onclick={() => updateQuantity(
-    item.productId._id,
-    -1,
-    item.productId.stock
-  )}
-  disabled={
-    item.quantity <= (item.selectedOffer?.offerType === 'Negotiate' && item.productId.negMOQ
-      ? item.productId.negMOQ
-      : 1) || item.productId.stock === 0 || isUpdatingQuantity
-  }
-  class={`w-7.5 h-7.5 pl-2 border-gray-300 text-base flex items-center justify-center
-    ${item.quantity <= (item.selectedOffer?.offerType === 'Negotiate' && item.productId.negMOQ
-      ? item.productId.negMOQ
-      : 1) || item.productId.stock === 0 || isUpdatingQuantity
-      ? 'text-[#30363c6d] cursor-not-allowed'
-      : 'text-primary cursor-pointer'}
-  `}
+        onclick={() => updateQuantity(
+          item.productId._id,
+          -1,
+          item.productId.stock
+        )}
+        class={`w-7.5 h-7.5 pl-2 border-gray-300 text-base flex items-center justify-center
+          ${item.productId.stock === 0
+            ? 'text-[#30363c6d] cursor-not-allowed'
+            : 'text-primary cursor-pointer'}
+        `}
 >
   -
 </button>
@@ -824,18 +822,17 @@ function updateQuantity(productId: string, change: number, stock: number) {
                 >
                   {item.quantity}
                 </span>
-                <button
-  onclick={() => updateQuantity(
-    item.productId._id,
-    1,
-    item.productId.stock
-  )}
-  disabled={item.productId.stock === 0 || isUpdatingQuantity}
-  class={`w-7.5 h-7.5 pr-2 border-gray-300 text-base flex items-center justify-center
-    ${item.productId.stock === 0 || isUpdatingQuantity
-      ? 'text-[#30363c6d] cursor-not-allowed'
-      : 'text-primary cursor-pointer'}
-  `}
+                      <button
+        onclick={() => updateQuantity(
+          item.productId._id,
+          1,
+          item.productId.stock
+        )}
+        class={`w-7.5 h-7.5 pr-2 border-gray-300 text-base flex items-center justify-center
+          ${item.productId.stock === 0
+            ? 'text-[#30363c6d] cursor-not-allowed'
+            : 'text-primary cursor-pointer'}
+        `}
 >
   +
 </button>
@@ -860,7 +857,7 @@ function updateQuantity(productId: string, change: number, stock: number) {
         <span style="width: 13%; text-align: center;">GST (%)</span>
         <span style="width: 13%; text-align: center;">OFFER</span>
         <span style="width: 13%; text-align: center;">TOTAL</span>
-        <span style="width: 13%; text-align: center;">QUANTITY</span>
+        <span style="width: 13%; text-align: center;">ITEM QUANTITY</span>
         <span style="width: 5%; text-align: center;"></span>
       </div>
       {#if isCartLoading}
@@ -942,29 +939,12 @@ function updateQuantity(productId: string, change: number, stock: number) {
               `}
             >
              <button
-  onclick={() => updateQuantity(item.productId._id, -1, item.productId.stock)}
-  disabled={
-    loadingProductId === item.productId._id ||
-    item.quantity <= (
-      item.selectedOffer?.offerType === 'Negotiate' && item.productId.negMOQ
-        ? item.productId.negMOQ
-        : 1
-    ) ||
-    item.productId.stock === 0
-  }
-  class={`w-7.5 h-7.5 pl-2 border-gray-300 text-base flex items-center justify-center
-    ${
-      loadingProductId === item.productId._id ||
-      item.quantity <= (
-        item.selectedOffer?.offerType === 'Negotiate' && item.productId.negMOQ
-          ? item.productId.negMOQ
-          : 1
-      ) ||
-      item.productId.stock === 0
-        ? 'text-[#30363c6d] cursor-not-allowed'
-        : 'text-primary cursor-pointer'
-    }
-  `}
+      onclick={() => updateQuantity(item.productId._id, -1, item.productId.stock)}
+      class={`w-7.5 h-7.5 pl-2 border-gray-300 text-base flex items-center justify-center
+        ${item.productId.stock === 0
+          ? 'text-[#30363c6d] cursor-not-allowed'
+          : 'text-primary cursor-pointer'}
+      `}
 >
   -
 </button>
@@ -977,14 +957,13 @@ function updateQuantity(productId: string, change: number, stock: number) {
   {item.quantity}
 </span>
 
-<button
-  onclick={() => updateQuantity(item.productId._id, 1, item.productId.stock)}
-  disabled={loadingProductId === item.productId._id || item.productId.stock === 0}
-  class={`w-7.5 h-7.5 pr-2 border-gray-300 text-base flex items-center justify-center
-    ${loadingProductId === item.productId._id || item.productId.stock === 0
-      ? 'text-[#30363c6d] cursor-not-allowed'
-      : 'text-primary cursor-pointer'}
-  `}
+    <button
+      onclick={() => updateQuantity(item.productId._id, 1, item.productId.stock)}
+      class={`w-7.5 h-7.5 pr-2 border-gray-300 text-base flex items-center justify-center
+        ${item.productId.stock === 0
+          ? 'text-[#30363c6d] cursor-not-allowed'
+          : 'text-primary cursor-pointer'}
+      `}
 >
   +
 </button>
