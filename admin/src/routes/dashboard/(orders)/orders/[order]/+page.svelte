@@ -40,28 +40,23 @@
 	});
   
 	async function updateOrderStatus(newStatus: string) {
-	  if (!newStatus) return;
-	  if (newStatus === 'assigned') {
-		if (!assignedDeliveryAgent) {
-		  toast.error('Please select a delivery agent');
-		  return;
+		if (!newStatus) return;
+		if (newStatus === 'assigned') {
+			if (!assignedDeliveryAgent) {
+				toast.error('Please select a delivery agent');
+				return;
+			}
 		}
-	  }
-  
-	  if (newStatus == 'accepted') {
-		// updateOrder();
-		return;
-	  }
-  
-	  try {
-		await _axios.patch(`/orders/update-status/${$query.data?.order?._id}`, {
-		  status: newStatus
-		});
-		toast.success('Order status updated successfully');
-		$query.refetch();
-	  } catch (error) {
-		toast.error('Failed to update order status');
-	  }
+
+		try {
+			await _axios.patch(`/orders/update-status/${$query.data?.order?._id}`, {
+				status: newStatus
+			});
+			toast.success('Order status updated successfully');
+			$query.refetch();
+		} catch (error) {
+			toast.error('Failed to update order status');
+		}
 	}
   
 	function openPaymentStatusDialog(status: string) {
