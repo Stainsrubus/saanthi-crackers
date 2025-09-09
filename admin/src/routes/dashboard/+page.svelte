@@ -108,7 +108,7 @@
 						<h3>Recent Orders</h3>
 						<Button
 							onclick={() => {
-								goto('/hidden-admin-base-007/dashboard/orders');
+								goto('/dashboard/orders');
 							}}>View All</Button
 						>
 					</Card.Title>
