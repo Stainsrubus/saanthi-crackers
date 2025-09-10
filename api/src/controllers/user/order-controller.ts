@@ -155,7 +155,6 @@ export const userOrderController = new Elysia({
         }
       }
 
-      // Save the order
       await order.save();
 
       // Step 2: Reduce stock for all valid products
@@ -184,11 +183,28 @@ export const userOrderController = new Elysia({
 
       broadcastMessage(`New Order with Order ID: ${orderId} is placed by ${user.username}`);
 
-      return {
-        message: "Order created successfully",
-        status: true,
-        order,
-      };
+try {
+  const notification = await NotificationModel.create({
+    title: "Order Placed!",
+    description: `Your order #${orderId} has been placed successfully.`,
+    type: "Order",
+    userId: new mongoose.Types.ObjectId(userId),
+    isRead: false,
+    orderId: order._id,
+    response: "",
+    demand: ""
+  });
+  console.log("✅ Notification saved:", notification);
+} catch (error) {
+  console.error("❌ Failed to save notification:", error);
+}
+console.log("After notification save");
+
+return {
+  message: "Order created successfully",
+  status: true,
+  order,
+};
     } catch (error) {
       set.status = 500;
       console.error("Order Creation Error:", error);

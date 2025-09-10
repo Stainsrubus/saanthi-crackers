@@ -8,6 +8,8 @@ import dayjs from "dayjs";
 import Elysia, { t } from "elysia";
 import  ComboOffer  from "@/models/combo-model";
 import axios from "axios";
+import { NotificationModel } from "@/models/notification-model";
+import mongoose from "mongoose";
 
 export const adminOrderController = new Elysia({
   prefix: "/orders",
@@ -324,10 +326,10 @@ export const adminOrderController = new Elysia({
   
       try {
         const { id } = params;
-        const { status } = body;
-  
+        const { status } = body as { status: "pending" | "accepted" | "dispatched" | "picked" | "delivered" | "rejected" | "cancelled" };
+
         console.log(`Starting order status update for order ID: ${id}`);
-  
+
         const order = await OrderModel.findById(id);
         if (!order) {
           console.log(`Order not found for ID: ${id}`);
@@ -348,29 +350,65 @@ export const adminOrderController = new Elysia({
         order.status = status;
         await order.save();
         console.log(`Order status updated and saved in ${Date.now() - startTime}ms`);
-  
+
+        // Always create a new notification for status change
+        const statusTitles = {
+          pending: "Order Placed!",
+          accepted: "Order Accepted!",
+          dispatched: "Order Dispatched!",
+          picked: "Order Picked Up!",
+          delivered: "Order Delivered!",
+          rejected: "Order Cancelled!",
+          cancelled: "Order Cancelled!"
+        };
+        const statusDescriptions = {
+          pending: `Your order ${order.orderId} has been placed successfully.`,
+          accepted: `Your order ${order.orderId} has been accepted and will be prepared soon.`,
+          dispatched: `Your order ${order.orderId} is dispatched. Track your order for updates.`,
+          picked: `Your order ${order.orderId} is out for delivery.`,
+          delivered: `Your order ${order.orderId} has been delivered.`,
+          rejected: `Your order ${order.orderId} has been cancelled.`,
+          cancelled: `Your order ${order.orderId} has been cancelled.`
+        };
+        try {
+          const notification = await NotificationModel.create({
+            title: statusTitles[status] || "Order Updated",
+            description: statusDescriptions[status] || "Your order status has been updated.",
+            type: "Order",
+            userId: new mongoose.Types.ObjectId(order.user),
+            isRead: false,
+            orderId: order._id,
+            response: "",
+            demand: ""
+          });
+          console.log("✅ Notification saved:", notification);
+        } catch (error) {
+          console.error("❌ Failed to save notification:", error);
+        }
+        console.log("After notification save");
+
         // Send notification asynchronously, log error but don't block
-        if (status === "dispatched") {
-          sendNotification(
-            user.fcmToken,
-            "On the Way! In transit",
-            `Your order ${order.orderId} is dispatched. Track your order for updates.`
-          ).catch((notificationError) => {
-            console.error("Failed to send dispatched notification:", notificationError);
-          });
-          console.log(`Notification triggered for dispatched status in ${Date.now() - startTime}ms`);
-        }
+        // if (status === "dispatched") {
+        //   sendNotification(
+        //     user.fcmToken,
+        //     "On the Way! In transit",
+        //     `Your order ${order.orderId} is dispatched. Track your order for updates.`
+        //   ).catch((notificationError) => {
+        //     console.error("Failed to send dispatched notification:", notificationError);
+        //   });
+        //   console.log(`Notification triggered for dispatched status in ${Date.now() - startTime}ms`);
+        // }
   
-        if (status === "accepted") {
-          sendNotification(
-            user.fcmToken,
-            "Your Order has been Accepted",
-            `Your order ${order.orderId} is being accepted. We’ll notify you once it's out for dispatch.`
-          ).catch((notificationError) => {
-            console.error("Failed to send accepted notification:", notificationError);
-          });
-          console.log(`Notification triggered for accepted status in ${Date.now() - startTime}ms`);
-        }
+        // if (status === "accepted") {
+        //   sendNotification(
+        //     user.fcmToken,
+        //     "Your Order has been Accepted",
+        //     `Your order ${order.orderId} is being accepted. We’ll notify you once it's out for dispatch.`
+        //   ).catch((notificationError) => {
+        //     console.error("Failed to send accepted notification:", notificationError);
+        //   });
+        //   console.log(`Notification triggered for accepted status in ${Date.now() - startTime}ms`);
+        // }
   
         set.status = 200;
         return {
@@ -859,4 +897,4 @@ export const adminOrderController = new Elysia({
         paymentStatus: t.String(),
       }),
     }
-  )  
+  )

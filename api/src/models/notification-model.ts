@@ -1,11 +1,14 @@
-import { Schema, model, Document } from "mongoose";
+import { Schema, model, Document, Types } from "mongoose";
 
 interface INotification extends Document {
   title: string;
   description: string;
   type: string;
-  userId: Schema.Types.ObjectId;
+  userId: Types.ObjectId;
+  response?: string;
   isRead: boolean;
+  orderId?: Types.ObjectId;
+  demand?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -36,6 +39,13 @@ const notificationSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    orderId: { 
+      type: Schema.Types.ObjectId,
+      ref: "Order"
+    },
+    demand: {
+      type: String
+    }
   },
   {
     timestamps: true,

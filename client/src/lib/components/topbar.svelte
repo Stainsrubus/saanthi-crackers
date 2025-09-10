@@ -167,16 +167,17 @@
     queryFn: async ({ pageParam = 1 }) => {
       const token = localStorage.getItem('token');
       const userData = localStorage.getItem('userData');
-      if (!token || !userData) {
-        writableGlobalStore.update((store) => ({
-          ...store,
-          isLogedIn: false,
-          userId: null,
-        }));
-        throw new Error('No token or user data found. Please log in.');
-      }
+      // if (!token || !userData) {
+      //   writableGlobalStore.update((store) => ({
+      //     ...store,
+      //     isLogedIn: false,
+      //     userId: null,
+      //   }));
+      //   throw new Error('No token or user data found. Please log in.');
+      // }
       try {
-        const userId = JSON.parse(userData)?.userId;
+        const userId = $writableGlobalStore.userDetails?.userId;
+        console.log('Fetching notifications for userId:', userId, 'page:', pageParam);
         if (!userId) throw new Error('User ID not found');
         const response = await _axios.get(`/notification?page=${pageParam}&limit=10`, {
           headers: {
