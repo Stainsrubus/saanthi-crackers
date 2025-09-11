@@ -265,49 +265,71 @@
   };
 
   const cancelOrderMutation = createMutation({
-    mutationFn: async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No token found. Please log in.');
-      }
-      try {
-        const response = await _axios.post(`/orders/cancel/${orderId}`, {}, {
-          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-        });
-        if (!response.data.status) {
-          throw new Error(response.data.message || 'Failed to cancel the order');
-        }
-        goto('/order-history');
-        return response.data;
-      } catch (error) {
-        throw error instanceof Error ? error : new Error('An unexpected error occurred');
-      }
-    },
-    onSuccess: () => {
-      toast.success('Order cancelled successfully');
-    },
-    onError: (error: any) => {
-      toast.error(error instanceof Error ? error.message : 'Failed to cancel order');
-    },
-  });
-
-  const handleCancelOrder = async () => {
-    try {
-      if (!$orderQuery.data?.data) {
-        toast.error('Order details not available');
-        return;
-      }
-      const orderStatus = $orderQuery.data.data.status;
-      if (orderStatus !== 'pending' && orderStatus !== 'accepted') {
-        toast.error('This order cannot be cancelled.');
-        return;
-      }
-      await $cancelOrderMutation.mutateAsync();
-      isDialogOpen = false;
-    } catch (error) {
-      toast.error('Failed to cancel order');
+  mutationFn: async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('No token found. Please log in.');
     }
-  };
+    try {
+      const response = await _axios.post(
+        `/orders/cancel/${orderId}`,
+        {},
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      // Log full response for debugging
+      console.log("Cancel Order API response:", response);
+
+      if (!response.data.status) {
+        throw new Error(response.data.message || 'Failed to cancel the order...');
+      }
+
+      goto('/order-history');
+      return response.data;
+    } catch (error: any) {
+      // Log details so you can see backend error messages
+      if (error.response) {
+        console.error("Cancel Order API Error:", error.response.data);
+      } else {
+        console.error("Cancel Order Unexpected Error:", error);
+      }
+      throw error instanceof Error ? error : new Error('An unexpected error occurred');
+    }
+  },
+  onSuccess: () => {
+    toast.success('Order cancelled successfully');
+  },
+  onError: (error: any) => {
+    toast.error(error instanceof Error ? error.message : 'Failed to cancel order');
+  },
+});
+
+const handleCancelOrder = async () => {
+  try {
+    if (!$orderQuery.data?.data) {
+      toast.error('Order details not available');
+      return;
+    }
+
+    const orderStatus = $orderQuery.data.data.status;
+    if (orderStatus !== 'pending' && orderStatus !== 'accepted') {
+      toast.error('This order cannot be cancelled.');
+      return;
+    }
+
+    await $cancelOrderMutation.mutateAsync();
+    isDialogOpen = false;
+  } catch (error) {
+    console.error("Handle Cancel Order Error:", error);
+    toast.error('Failed to cancel order');
+  }
+};
+
 </script>
 
 <div class="xl:max-w-[75%] 2xl:max-w-[60%] lg:max-w-[85%] md:max-w-[75%] mx-auto p-4 lg:pt-10 pb-20">

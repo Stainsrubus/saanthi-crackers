@@ -496,18 +496,19 @@
             {/if}
             {#if $productQuery.data.discount}
               <span class="text-3xl font-bold text-gray-900">₹{Math.round($productQuery.data.MRP - ($productQuery.data.MRP * ($productQuery.data.discount || 0) / 100))}</span>
+              <span class="text-xl line-through text-gray-700">
+                ₹{$productQuery.data.MRP.toLocaleString()}
+              </span>
+            {:else}
+              <span class="text-3xl font-bold text-gray-900">₹{$productQuery.data.MRP.toLocaleString()}</span>
             {/if}
-            <span class="text-xl line-through text-gray-700">
-              ₹{$productQuery.data.MRP.toLocaleString()}
-            </span>
             <span>/ {$productQuery.data.unit?.name}</span>
             {#if discountPercentage > 0}
               <span class="px-2 py-1 bg-green-100 text-green-800 text-sm font-medium rounded">
                 {discountPercentage}% OFF
               </span>
             {/if}
-          </div>
-          <!-- Action Buttons -->
+          </div>          <!-- Action Buttons -->
           <div class="flex gap-3 mt-6 w-full">
             <div class="flex items-center border rounded-lg">
               <button

@@ -176,8 +176,8 @@
       //   throw new Error('No token or user data found. Please log in.');
       // }
       try {
-        const userId = $writableGlobalStore.userDetails?.userId;
-        console.log('Fetching notifications for userId:', userId, 'page:', pageParam);
+        const userId = $writableGlobalStore.userDetails.userId;
+        console.log('Fetching notifications for userId:', userId);
         if (!userId) throw new Error('User ID not found');
         const response = await _axios.get(`/notification?page=${pageParam}&limit=10`, {
           headers: {

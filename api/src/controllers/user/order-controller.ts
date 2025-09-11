@@ -690,79 +690,77 @@ return {
           set.status = 404;
           return { message: "User not found", status: false };
         }
-  
-       
 
-
-        // let refundDetails = null;
+        // Fix: define refundDetails before using it
+        let refundDetails = null;
   
-        // // Handle refund for Razorpay payments
-        // if (order.paymentMethod === "Online" && order.razorPayId) {
-        //   try {
-        //     // Validate totalPrice
-        //     if (order.totalPrice <= 0) {
-        //       set.status = 400;
-        //       return {
-        //         message: "Cannot refund order with zero or negative amount",
-        //         status: false
-        //       };
-        //     }
+        // Handle refund for Razorpay payments
+        if (order.paymentMethod === "Online" && order.razorPayId) {
+          try {
+            // Validate totalPrice
+            if (order.totalPrice <= 0) {
+              set.status = 400;
+              return {
+                message: "Cannot refund order with zero or negative amount",
+                status: false
+              };
+            }
   
-        //     // Check if payment is captured
-        //     const paymentResponse = await axios.get(
-        //       `https://api.razorpay.com/v1/payments/${order.razorPayId}`,
-        //       {
-        //         auth: {
-        //           username: process.env.RAZORPAY_KEY_ID || 'YOUR_KEY_ID',
-        //           password: process.env.RAZORPAY_KEY_SECRET || 'YOUR_KEY_SECRET',
-        //         },
-        //       }
-        //     );
+            // Check if payment is captured
+            const paymentResponse = await axios.get(
+              `https://api.razorpay.com/v1/payments/${order.razorPayId}`,
+              {
+                auth: {
+                  username: process.env.RAZORPAY_KEY_ID || 'YOUR_KEY_ID',
+                  password: process.env.RAZORPAY_KEY_SECRET || 'YOUR_KEY_SECRET',
+                },
+              }
+            );
   
-        //     const payment = paymentResponse.data;
-        //     if (payment.status !== 'captured') {
-        //       set.status = 400;
-        //       return {
-        //         message: "Payment not captured yet, cannot process refund",
-        //         status: false
-        //       };
-        //     }
+            const payment = paymentResponse.data;
+            if (payment.status !== 'captured') {
+              set.status = 400;
+              return {
+                message: "Payment not captured yet, cannot process refund",
+                status: false
+              };
+            }
   
-        //     // Process refund
-        //     const refundResponse = await axios.post(
-        //       `https://api.razorpay.com/v1/payments/${order.razorPayId}/refund`,
-        //       {
-        //         amount: Math.round(order.totalPrice * 100), // Convert to paise
-        //         speed: "normal",
-        //         notes: {
-        //           reason: `Order ${order.orderId} cancelled by user ${user.username}`,
-        //           cancelled_by: user._id.toString(),
-        //         },
-        //       },
-        //       {
-        //         auth: {
-        //           username: process.env.RAZORPAY_KEY_ID || 'YOUR_KEY_ID',
-        //           password: process.env.RAZORPAY_KEY_SECRET || 'YOUR_KEY_SECRET',
-        //         },
-        //       }
-        //     );
+            // Process refund
+            const refundResponse = await axios.post(
+              `https://api.razorpay.com/v1/payments/${order.razorPayId}/refund`,
+              {
+                amount: Math.round(order.totalPrice * 100), // Convert to paise
+                speed: "normal",
+                notes: {
+                  reason: `Order ${order.orderId} cancelled by user ${user.username}`,
+                  cancelled_by: user._id.toString(),
+                },
+              },
+              {
+                auth: {
+                  username: process.env.RAZORPAY_KEY_ID || 'YOUR_KEY_ID',
+                  password: process.env.RAZORPAY_KEY_SECRET || 'YOUR_KEY_SECRET',
+                },
+              }
+            );
   
-        //     refundDetails = refundResponse.data;
+            refundDetails = refundResponse.data;
   
-        //     // Update order with refund details
-        //     order.refunded = true;
-        //     order.refundedAmount = order.totalPrice;
-        //     order.refundedAt = new Date();
-        //   } catch (refundError) {
-        //     console.error('Refund error:', refundError);
-        //     set.status = 500;
-        //     return {
-        //       message: "Failed to process refund",
-        //       status: false,
-        //       error: refundError instanceof Error ? refundError.message : "Unknown refund error",
-        //     };
-        //   }
-        // }
+            // Update order with refund details
+            order.refunded = true;
+            order.refundedAmount = order.totalPrice;
+            order.refundedAt = new Date();
+          } catch (refundError) {
+            console.error('Refund error:', refundError);
+            set.status = 500;
+            return {
+              message: "Failed to process refund",
+              status: false,
+              error: refundError instanceof Error ? refundError.message : "Unknown refund error",
+            };
+          }
+        }
   
         // Restore product quantities
         const stockUpdates = []; // Track for rollback

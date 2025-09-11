@@ -4,6 +4,7 @@ type userDetails = {
     profileImage: string;
     userName: string;
     mobile:string;
+    userId:string;
 };
 
 export type GlobalStore = {
@@ -24,6 +25,7 @@ const getInitialState = (): GlobalStore => {
                 profileImage: '',
                 userName: '',
                 mobile:'',
+                userId:''
             },
             isLogedIn: !!token,
             cartCount: 0,
@@ -35,6 +37,7 @@ const getInitialState = (): GlobalStore => {
             profileImage: '',
             userName: '',
             mobile:'',
+            userId:''
         },
         isLogedIn: false,
         cartCount: 0,
