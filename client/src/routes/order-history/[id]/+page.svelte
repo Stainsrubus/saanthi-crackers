@@ -8,6 +8,7 @@
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import Icon from '@iconify/svelte';
+  import html2pdf from "html2pdf.js";
 
   interface Product {
     productId: {
@@ -108,70 +109,208 @@
     enabled: !!orderId,
   });
 
-  const invoiceMutation = createMutation({
-  mutationFn: async () => {
-    const token = localStorage.getItem('token');
-    if (!token) throw new Error('No token found. Please log in.');
-
-    try {
-      const response = await _axios.post(
-        `/invoice/generate?orderId=${orderId}`,{},
-        {
-          headers: { 
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          responseType: 'blob' // This is the key change!
-        }
-      );
-
-      // Check if we got a blob response
-      if (!(response.data instanceof Blob)) {
-        // If not a blob, try to read as JSON (for error messages)
-        const text = await response.data.text();
-        try {
-          const json = JSON.parse(text);
-          throw new Error(json.message || 'Failed to generate invoice');
-        } catch {
-          throw new Error(text || 'Invalid response format');
-        }
-      }
-
-      return response.data;
-    } catch (error: any) {
-      if (error.response) {
-        // Handle error responses that might be JSON
-        if (error.response.headers['content-type']?.includes('application/json')) {
-          throw new Error(error.response.data.message || 'Failed to generate invoice');
-        }
-        // Handle blob error responses
-        const errorText = await error.response.data.text();
-        throw new Error(errorText || 'Server error while generating invoice');
-      }
-      throw new Error(error.message || 'Failed to generate invoice');
+  // =====================================
+function downloadInvoice(order: any) {
+  
+  const template = `
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght@8..144,400;500;700&display=swap");
+    * { font-family: "Roboto Flex", sans-serif; }
+    :root {
+      --secondary-text-color: #5e6470;
+      --border-table: #d7dae0;
+      --terms-color: #5e6470;
     }
-  },
-  onSuccess: (pdfBlob: Blob) => {
-    // Create a URL for the Blob and trigger download
-    const url = window.URL.createObjectURL(pdfBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `invoice_${orderId}.pdf`;
-    document.body.appendChild(link);
-    link.click();
+    body { margin: 0; padding: 0; font-weight: 400; }
+    .invoice { width: 700px; margin: 0 auto; padding: 20px 30px; }
     
-    // Cleanup
-    setTimeout(() => {
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    }, 100);
+    /* Header */
+    .invoice-header-wrapper { display: flex; justify-content: space-between; align-items: flex-start; }
+    .invoice-id { font-size: 20px; font-weight: 700; text-transform: uppercase; margin: 0; }
+    .legal-entity-name { margin: 6px 0; font-weight: 600; color: var(--secondary-text-color); text-transform: uppercase; font-size: 14px; }
+    .invoice-detail { font-size: 13px; color: var(--secondary-text-color); margin-top: 5px; }
+    .invoice-logo img { height: 65px; margin-left: 20px; }
+
+    /* Section Titles */
+    .section-title { margin: 30px 0 10px; font-size: 16px; font-weight: 700; text-transform: uppercase; border-bottom: 2px solid #eee; padding-bottom: 4px; }
+
+    /* Order Details */
+    .order-item-details { display: flex; justify-content: space-between; gap: 40px; margin-top: 15px; font-size: 13px; }
+    .order-item-details-content { flex: 1; }
+    .order-item-details-title { font-weight: 600; margin-bottom: 3px; }
+
+    /* Table */
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
+    th, td { border: 1px solid var(--border-table); padding: 8px; text-align: center; }
+    th { background: #f5f5f5; font-weight: 600; }
+
+    /* Totals */
+    .grand-total { margin-top: 20px; font-size: 15px; font-weight: 700; }
+
+    /* Terms */
+    .invoice-terms { margin-top: 25px; }
+    .invoice-terms-head { font-size: 15px; font-weight: 700; margin-bottom: 10px; text-transform: uppercase; }
+    .invoice-terms li { margin-bottom: 8px; font-size: 12px; color: var(--terms-color); }
+
+    /* Footer */
+    .footer { margin-top: 40px; font-size: 12px; color: var(--secondary-text-color); }
+    .footer .footer-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+    .footer-address { display: flex; gap: 8px; flex-wrap: wrap; }
+  </style>
+
+  <div class="invoice">
+    <div class="invoice-header-wrapper">
+      <div>
+        <h2 class="invoice-id">INVOICE : ${order.orderId}</h2>
+        <div class="invoice-detail">
+          <p>GST IN : 33AAKFJ1684K1Z3</p>
+        </div>
+        <p class="legal-entity-name">LEGAL ENTITY NAME : La La Santhi Crackers</p>
+      </div>
+      <div class="invoice-logo">
+        <img src="/logo.png" />
+      </div>
+    </div>
+
+    <div class="section-title">Order Details</div>
+    <div class="order-item-details">
+      <div class="order-item-details-content">
+        <p class="order-item-details-title">Order ID</p>
+        <p class="normal-text">${order.orderId}</p>
+        <p class="order-item-details-title">Order Time</p>
+        <p>${new Date(order.createdAt).toLocaleString()}</p>
+      </div>
+      <div class="order-item-details-content">
+        <p class="order-item-details-title">Customer Detail</p>
+        <p>${order.addressId.receiverName}</p>
+        <p>${order.addressId.flatorHouseno}, ${order.addressId.area}, ${order.addressId.landmark}</p>
+        <p>${order.addressId.receiverMobile}</p>
+      </div>
+    </div>
+
+    <div class="section-title">Order Item Details</div>
+    <table>
+      <tr>
+        <th>Order Items</th>
+        <th>Product Quantity</th>
+        <th>Discount</th>
+        <th>Net Value</th>
+        <th>Total</th>
+      </tr>
+      ${order.products.map((p:any) => `
+        <tr>
+          <td>${p.productId.productName}</td>
+          <td>${p.quantity}</td>
+          <td>₹0</td>
+          <td>₹${p.price.toFixed(2)}</td>
+          <td>₹${p.totalAmount.toFixed(2)}</td>
+        </tr>
+      `).join("")}
+    </table>
+
+    <div class="section-title">Grand Total</div>
+    <p style="font-size:16px; font-weight:700;">₹${order.totalPrice.toFixed(2)}</p>
+
+    <div class="invoice-terms">
+      <p class="invoice-terms-head">Terms & Conditions</p>
+      <ol>
+        <li>Goods once sold will not be taken back or exchanged.</li>
+        <li>All disputes are subject to Trivandrum jurisdiction.</li>
+        <li>Please retain this invoice for future reference.</li>
+      </ol>
+    </div>
+
+    <div class="footer">
+      <hr/>
+      <div class="footer-content">
+        <p>La La Santhi Crackers</p>
+        <div class="footer-address">
+          <p>1234567890</p>
+          <p>|</p>
+          <p>ecommerce@ymail.com</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  `;
+
+  html2pdf()
+    .from(template)
+    .set({
+      margin: 0.5,
+      filename: `invoice_${order.orderId}.pdf`,
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
+    })
+    .save();
+}
+  //====================================
+
+//   const invoiceMutation = createMutation({
+//   mutationFn: async () => {
+//     const token = localStorage.getItem('token');
+//     if (!token) throw new Error('No token found. Please log in.');
+
+//     try {
+//       const response = await _axios.post(
+//         `/invoice/generate?orderId=${orderId}`,{},
+//         {
+//           headers: { 
+//             Authorization: `Bearer ${token}`,
+//             'Content-Type': 'application/json'
+//           },
+//           responseType: 'blob' // This is the key change!
+//         }
+//       );
+
+//       // Check if we got a blob response
+//       if (!(response.data instanceof Blob)) {
+//         // If not a blob, try to read as JSON (for error messages)
+//         const text = await response.data.text();
+//         try {
+//           const json = JSON.parse(text);
+//           throw new Error(json.message || 'Failed to generate invoice');
+//         } catch {
+//           throw new Error(text || 'Invalid response format');
+//         }
+//       }
+
+//       return response.data;
+//     } catch (error: any) {
+//       if (error.response) {
+//         // Handle error responses that might be JSON
+//         if (error.response.headers['content-type']?.includes('application/json')) {
+//           throw new Error(error.response.data.message || 'Failed to generate invoice');
+//         }
+//         // Handle blob error responses
+//         const errorText = await error.response.data.text();
+//         throw new Error(errorText || 'Server error while generating invoice');
+//       }
+//       throw new Error(error.message || 'Failed to generate invoice');
+//     }
+//   },
+//   onSuccess: (pdfBlob: Blob) => {
+//     // Create a URL for the Blob and trigger download
+//     const url = window.URL.createObjectURL(pdfBlob);
+//     const link = document.createElement('a');
+//     link.href = url;
+//     link.download = `invoice_${orderId}.pdf`;
+//     document.body.appendChild(link);
+//     link.click();
     
-    toast.success('Invoice downloaded successfully!');
-  },
-  onError: (error: Error) => {
-    toast.error(error.message || 'Failed to download invoice');
-  }
-});
+//     // Cleanup
+//     setTimeout(() => {
+//       document.body.removeChild(link);
+//       window.URL.revokeObjectURL(url);
+//     }, 100);
+    
+//     toast.success('Invoice downloaded successfully!');
+//   },
+//   onError: (error: Error) => {
+//     toast.error(error.message || 'Failed to download invoice');
+//   }
+// });
   const replacePaymentImageMutation = createMutation({
     mutationFn: async (paymentImages: File[]) => {
       const token = localStorage.getItem('token');
@@ -345,7 +484,7 @@ const handleCancelOrder = async () => {
     {@const order = $orderQuery.data.data}
     <div class="flex items-center justify-between">
       <h2 class="lg:text-3xl md:text-2xl text-xl font-bold text-[#30363C] mb-4">#{order.orderId}</h2>
-      <button
+      <!-- <button
         on:click={() => $invoiceMutation.mutate()}
         class="rounded-lg text-white custom-button mb-4 flex gap-1 flex-nowrap p-2"
         disabled={$invoiceMutation.isPending}
@@ -358,7 +497,16 @@ const handleCancelOrder = async () => {
         {:else}
           Download Invoice
         {/if}
-      </button>
+      </button> -->
+      <button
+  on:click={() => downloadInvoice($orderQuery.data.data)}
+  class="rounded-lg text-white custom-button mb-4 flex gap-1 flex-nowrap p-2"
+>
+  <span>
+    <Icon icon="material-symbols:downloading-rounded" width="24" height="24" />
+  </span>
+  Download Invoice
+</button>
     </div>
 
     <!-- Order Header -->

@@ -12,8 +12,6 @@ export const onMessageListener = () => {
       console.log('Message listening...');
 
       onMessage(messaging, async (payload) => {
-        console.log('Foreground message received:', payload);
-
         const messageId = payload.data?.id || `${payload.messageId}-${Date.now()}`;
         if (processedNotifications.has(messageId)) {
           console.log('Duplicate notification ignored:', messageId);

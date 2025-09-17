@@ -138,9 +138,67 @@
 }
 </script>
 
-<!-- Product Card -->
+<!-- ✅ Mobile View (Qty on right side) -->
+<div class="sm:hidden w-full bg-white border rounded-lg shadow p-4 flex items-start gap-4">
+  <!-- Left side (Product Image) -->
+  <div class="flex-shrink-0 w-20">
+    <img
+      src={imgUrl + image}
+      alt={name}
+      class="w-20 h-20 object-contain rounded"
+    />
+  </div>
+
+  <!-- Right side (Info) -->
+  <div class="flex-1 flex flex-col gap-2 relative">
+    <h3 class="text-base font-bold text-[#222] leading-snug">{name}</h3>
+
+    <div class="flex items-center gap-2">
+      {#if discount}
+        <span class="line-through text-sm text-gray-400">₹{MRP}</span>
+      {/if}
+      <span class="text-lg font-semibold text-gray-800">₹{unitPrice}</span>
+    </div>
+
+    <p class="text-sm text-gray-600">
+      Total: <span class="font-semibold text-gray-900">₹{totalAmount.toFixed(2)}</span>
+    </p>
+
+    <p class="text-sm text-green-600 font-medium">
+      GST: {discount ? `${discount}%` : '2%'}
+    </p>
+
+    <!-- Qty Selector Box -->
+<div class="absolute bottom-0 right-0 mb-2 mr-2 flex items-center border border-gray-300 rounded-md overflow-hidden bg-gray-50">
+  <!-- Minus Button -->
+  <button
+    class="w-8 h-8 flex items-center justify-center border-r border-gray-300 text-gray-700 font-bold text-lg hover:bg-gray-200"
+    on:click={() => { if (selectedQty > minQty) { selectedQty--; handleQtyChange(); } }}
+  >-</button>
+
+  <!-- Input Box -->
+  <input
+    type="number"
+    min={minQty}
+    max={maxQty}
+    bind:value={selectedQty}
+    on:change={handleQtyChange}
+    class="w-12 text-center text-base font-semibold border-0 bg-transparent focus:outline-none"
+  />
+
+  <!-- Plus Button -->
+  <button
+    class="w-8 h-8 flex items-center justify-center border-l border-gray-300 text-gray-700 font-bold text-lg hover:bg-gray-200"
+    on:click={() => { if (selectedQty < maxQty) { selectedQty++; handleQtyChange(); } }}
+  >+</button>
+</div>
+
+  </div>
+</div>
+
+<!-- ✅ Tablet + Desktop View (your original card) -->
 <div
-  class="relative group bg-white border rounded-xl shadow-md overflow-hidden transition-transform duration-200 hover:scale-[1.02] 
+  class="hidden sm:block relative group bg-white border rounded-xl shadow-md overflow-hidden transition-transform duration-200 hover:scale-[1.02] 
          w-full sm:w-44 md:w-56 lg:w-64"
   style="cursor: pointer;"
   on:click={handleClick}
@@ -203,8 +261,6 @@
           class="border rounded px-2 py-1 text-xs sm:text-sm w-16 min-w-[60px] text-center"
           on:click|stopPropagation
           on:input|stopPropagation={handleQtyChange}
-          inputmode="numeric"
-          pattern="[0-9]*"
         />
       </div>
     </div>
@@ -217,3 +273,4 @@
     </div>
   {/if}
 </div>
+
