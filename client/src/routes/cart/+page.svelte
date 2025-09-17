@@ -771,27 +771,24 @@ function updateQuantity(productId: string, change: number, stock: number) {
                       goto(`/Products/${item.productId._id}`)
                     }
                   }}
-                  class={`font-bold text-lg mb-0.5 ${item.productId.stock===0?'text-[#30363c6d]':'text-[#30363C] hover:underline hover:text-[#01A0E2]'}`}
+                  class={`font-bold text-lg mb-0.5 text-left w-full ${item.productId.stock===0?'text-[#30363c6d]':'text-[#30363C] hover:underline hover:text-[#01A0E2]'}`}
                 >
                   {item.productId.productName}
                 </button>
-                <p>
+                <div class="flex flex-row flex-wrap items-center gap-2 mt-1">
                   {#if item.productId?.discount}
                     <span class={`${item.productId.stock === 0 ? 'text-[#30363c6d]' : 'text-[#249B3E]'} line-through`}>
                       ₹{item.productId.price}
                     </span>
-                    <span class='ml-2'>
-                      ₹{item.price}
-                    </span>
+                    <span class='ml-3 text-[#30363C] font-semibold'>₹{item.price}</span>
                   {:else}
-                    <span class={`${item.productId.stock === 0 ? 'text-[#30363c6d]' : 'text-[#249B3E]'}`}>
+                    <span class={`${item.productId.stock === 0 ? 'text-[#30363c6d]' : 'text-[#249B3E]'} font-semibold`}>
                       ₹{item.productId.price}
+
                     </span>
                   {/if}
-                </p>
-                <p class="text-sm">
-                  GST: {item.productId.gst}%
-                </p>
+                  <span class="text-xs text-gray-500 ml-2">GST: {item.productId.gst}%</span>
+                </div>
               </div>
             </div>
             <div class={`item-total text-center font-semibold text-base ${item.productId.stock===0?'text-[#30363c6d]':'text-[#30363C]'}`}>

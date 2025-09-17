@@ -256,6 +256,7 @@
             profileImage: userData.userDetails.profileImage || '',
             userName: userData.userDetails.username || '',
             mobile: userData.userDetails.mobile || '',
+            userId: userData.userDetails.userId || '',
           },
           isLogedIn: true,
         }));
@@ -484,7 +485,7 @@
                     {#each cells.slice(0, 3) as cell}
                       <InputOTP.Slot 
                         {cell} 
-                        class="w-12 h-12 text-center text-lg border-2 {otpError ? 'border-red-500' : 'border-gray-300'} rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-200" 
+                        class="w-9 h-9 text-center text-lg border-2 {otpError ? 'border-red-500' : 'border-gray-300'} rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-200" 
                       />
                     {/each}
                   </InputOTP.Group>
@@ -495,7 +496,7 @@
                     {#each cells.slice(3, 6) as cell}
                       <InputOTP.Slot 
                         {cell} 
-                        class="w-12 h-12 text-center text-lg border-2 {otpError ? 'border-red-500' : 'border-gray-300'} rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-200" 
+                        class="w-9 h-9 text-center text-lg border-2 {otpError ? 'border-red-500' : 'border-gray-300'} rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-200" 
                       />
                     {/each}
                   </InputOTP.Group>
@@ -504,7 +505,7 @@
             </div>
             {#if otpError}
               <p class="text-red-500 text-sm text-center flex items-center justify-center gap-1">
-                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 20 20">
                   <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
                 </svg>
                 {otpError}

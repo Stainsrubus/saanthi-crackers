@@ -10,13 +10,22 @@
 	import Topbar from '$lib/components/topbar.svelte';
 	import Navbar from '$lib/components/navbar.svelte';
 
-	onMount(async () => {
-		if (browser) {
-			try {
-				if (typeof window !== 'undefined') {
-					import('$lib/firebase').then(async ({ onMessageListener, requestForToken,  }) => {
-						console.log('Checking notification permission...');
+	import { writable } from 'svelte/store';
+	const isMobile = writable(false);
+	function checkMobile() {
+	    isMobile.set(window.innerWidth <= 768);
+	}
 
+	onMount(() => {
+		if (browser) {
+			checkMobile();
+			window.addEventListener('resize', checkMobile);
+			(async () => {
+				try {
+					if (typeof window !== 'undefined') {
+						const { onMessageListener, requestForToken } = await import('$lib/firebase');
+						console.log('Checking notification permission...');
+	
 						console.log('Requesting FCM token...');
 						const res = await requestForToken();
 						
@@ -42,34 +51,37 @@
 						// 		}
 						// 	}
 						// });
-					});
+					}
+					if ('serviceWorker' in navigator) {
+						navigator.serviceWorker
+							.register('/firebase-messaging-sw.js')
+							.then((registration) => {
+								console.log('Service Worker registered:', registration);
+							})
+							.catch((err) => {
+								console.log('Service Worker registration failed:', err);
+							});
+					}
+					
+				} catch (error) {
+					console.error('Error initializing Firebase messaging:', error);
 				}
-				if ('serviceWorker' in navigator) {
-					navigator.serviceWorker
-						.register('/firebase-messaging-sw.js')
-						.then((registration) => {
-							console.log('Service Worker registered:', registration);
-						})
-						.catch((err) => {
-							console.log('Service Worker registration failed:', err);
-						});
-				}
-				
-			} catch (error) {
-				console.error('Error initializing Firebase messaging:', error);
-			}
+			})();
+			return () => window.removeEventListener('resize', checkMobile);
 		}
 	});
 </script>
 
 <Toaster position="top-center" />
 <QueryClientProvider client={queryClient}>
-	<div class="fixed z-50">
-		<Navbar />
-		<Topbar />
-	</div>
+	<div class="sticky top-0 z-50 bg-white">
+  {#if !$isMobile}
+    <Navbar />
+  {/if}
+  <Topbar />
+</div>
 
-		<div class="pt-[150px] scrollbar-hide">
-			{@render children()}
-		</div>
+<div class="scrollbar-hide">
+  {@render children()}
+</div>
 </QueryClientProvider>

@@ -13,6 +13,15 @@
 	import { goto } from '$app/navigation';
   import Footer from '$lib/components/footer.svelte';
 
+  // Set default Leaflet marker icon to blue-dot
+  const DefaultIcon = L.icon({
+    iconUrl: 'https://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+    iconSize: [32, 32],
+    iconAnchor: [16, 32],
+    popupAnchor: [0, -32]
+  });
+  L.Marker.prototype.options.icon = DefaultIcon;
+
   interface Address {
     _id: string;
     receiverName: string;

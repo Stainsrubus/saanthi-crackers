@@ -88,11 +88,11 @@
   // }
 </script>
 
-<section class="pl-4 md:px-6 lg:px-8 md:py-10 ">
-  <div class="mt-10">
-    <div class="flex items-start gap-4">
+<section class="px-4 md:px-6 lg:px-8 md:py-10 ">
+  <!-- <div class="mt-10"> -->
+    <div class="flex items-start gap-2 mt-1 mb-1">
       <img src="/svg/firework1.svg" alt="">
-      <h2 class="lg:text-4xl text-2xl font-bold text-primary mb-6 text-left">Our Products</h2>
+      <h2 class="lg:text-4xl text-2xl font-bold text-primary mb-2 text-left">Our Products..</h2>
       <img class="scale-x-[-1]" src="/svg/firework1.svg" alt="">
     </div>
     {#if productsLoading || productsError}
@@ -117,32 +117,32 @@
     {:else if products.length === 0}
       <p class="text-center text-gray-500 mt-10">No products found</p>
     {:else}
-      <div class="flex flex-col justify-center items-center md:pt-10">
-        <div class="flex md:gap-6 items-center flex-wrap gap-4 py-1 px-1 scrollbar-hide">
-          {#each products as product (product.id)}
-            <div class="flex-wrap">
-           
-              <ProductCard
-                id={product.id}
-                image={product.image[0]}
-                discount={product.discount}
-                name={product.name}
-                MRP={product.MRP}
-                unit={product?.unit}
-                favorite={product.favorite}
-                available={product.available}
-              />
-            </div>
-          {/each}
-        </div>
+  <div class="flex flex-col justify-center items-center md:pt-2 pt-2">
+      <div
+  class="grid gap-4 md:gap-6 lg:gap-20 w-full"
+  style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));"
+>
+  {#each products as product (product.id)}
+    <ProductCard
+      id={product.id}
+      image={product.image[0]}
+      discount={product.discount}
+      name={product.name}
+      MRP={product.MRP}
+      unit={product?.unit}
+      favorite={product.favorite}
+      available={product.available}
+    />
+  {/each}
+</div>
         <button
           on:click={() => goto('/Products')}
-          class="flex items-center justify-center gap-2 px-6 py-2 mt-10 mb-20 rounded-xl custom-button"
+          class="flex items-center justify-center gap-2 px-6 py-2 mt-10 mb-4 rounded-xl custom-button"
         >
           View All
           <Icon icon="mdi:arrow-right-thin" class="text-red-700 text-xl" />
         </button>
       </div>
     {/if}
-  </div>
+  <!-- </div> -->
 </section>

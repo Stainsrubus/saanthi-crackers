@@ -121,9 +121,9 @@
   $: categoriesError = $categoryQuery.error ? ($categoryQuery.error as Error).message : null;
 </script>
 
-<footer class="text-white py-10 bg-custom-gradient">
+<footer class="text-white py-6 bg-custom-gradient">
 
-<div class="px-4 md:px-6 lg:px-8 lg:mt-10 md:mt-14 mt-10 lg:mb-6 md:mb-10 mb-8 ">
+<div class="px-4 md:px-6 lg:px-8 lg:mt-4 md:mt-6 mt-2 lg:mb-6 md:mb-10 mb-8 ">
   <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-10">
     <!-- Column 1: Company Description -->
     <div class="col-span-2 md:col-span-1">
@@ -209,19 +209,8 @@
       </div>
   
       <!-- Column 4: Contact Us -->
-      <div class="md:pr-10 ">
+      <div class="col-span-2 md:col-span-1 lg:col-span-1 w-full md:w-auto">
         <h3 class="lg:text-3xl md:text-2xl text-xl text-white font-bold mb-4">Contact Us</h3>
-        {#if storeLoading}
-        <ul class="space-y-3">
-          {#each Array(3) as _}
-            <li>
-              <Skeleton class="h-6 w-full" />
-            </li>
-          {/each}
-        </ul>
-      {:else if storeError}
-        <p class="text-red-500">Error loading contact information</p>
-      {:else}
         <ul class="space-y-3">
           <li class="flex items-start gap-2">
             <Icon icon="mynaui:location-selected" class="text-white min-h-8 min-w-8 mt-1" />
@@ -248,7 +237,6 @@
             </a>
           </li>
         </ul>
-      {/if}
       </div>
   </div>
 </div>

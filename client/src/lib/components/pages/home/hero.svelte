@@ -114,68 +114,74 @@
   $: error = $categoriesQuery.error ? ($categoriesQuery.error as Error).message : null;
 </script>
 
-<div class="bg-header-gradient py-5 md:py-10 md:pt-24 text-[#30363C] scrollbar-hide">
+<div class="bg-header-gradient py-2 md:py-4 text-[#30363C] scrollbar-hide">
   <!-- Search Section -->
   <div>
-    <div class="z-30 flex md:hidden px-1 md:px-6 lg:px-8 flex-col relative items-center justify-center w-full lg:mb-10 mb-6">
-      <div class="border flex md:w-1/2 w-full rounded-full bg-white md:p-2 p-1">
-        <div class="relative w-full">
-          <input
-            type="text"
-            placeholder="Search medical products"
-            class="w-full absolute top-1/2 transform -translate-y-1/2 md:text-xl text-lg placeholder:text-base md:pl-20 pl-12 pr-1 rounded-full focus:outline-none focus:ring-0 text-gray-700"
-            on:input={handleSearch}
-            bind:value={searchQuery}
-          />
-          <img
-            class="absolute md:left-2 left-0 top-1/2 transform -translate-y-1/2 text-gray-400"
-            src="/svg/search.svg"
-            alt="search"
-          />
-        </div>
-        {#if searchResults}
-          <button
-            on:click={clearSearch}
-            class="ml-1 bg-custom-gradient font-medium md:text-xl text-base text-white md:px-5 md:py-5 px-2.5 py-2.5 rounded-full hover:scale-105 transition-all duration-200 flex items-center justify-center"
+   <div class="z-30 flex md:hidden px-1 md:px-6 lg:px-8 flex-col relative items-center justify-center w-full lg:mb-10 mb-6">
+  <!-- Search Bar -->
+  <div class="border flex md:w-1/2 w-full rounded-full bg-white md:p-2 p-1 shadow-md">
+    <div class="relative w-full">
+      <input
+        type="text"
+        placeholder="Search medical products"
+        class="w-full md:text-xl text-lg placeholder:text-base md:pl-20 pl-12 pr-1 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-purple-500 text-gray-700"
+        on:input={handleSearch}
+        bind:value={searchQuery}
+      />
+      <img
+        class="absolute md:left-2 left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5"
+        src="/svg/search.svg"
+        alt="search"
+      />
+    </div>
+
+    {#if searchResults}
+      <button
+        on:click={clearSearch}
+        class="ml-1 bg-custom-gradient font-medium text-white md:px-5 md:py-5 px-2.5 py-2.5 rounded-full hover:scale-105 transition-all duration-200 flex items-center justify-center"
+      >
+        <Icon icon="lucide:x" class="inline-block" width="20" />
+      </button>
+    {/if}
+  </div>
+
+  <!-- Results: no absolute, use mt-2 -->
+  {#if searchResults}
+    <div class="md:w-1/2 w-[90%] mt-2 lg:max-h-64 max-h-52 overflow-y-auto bg-white rounded-xl shadow-md py-4 pl-4">
+      {#if searchResults.data.length > 0}
+        {#each searchResults.data as product, index}
+          <div
+            on:click={() => { goto(`/Products/${product._id}`) }}
+            class="cursor-pointer {index === searchResults.data.length - 1 ? '' : 'border-b'} flex items-center gap-2 md:gap-10 p-1"
           >
-            <Icon icon="lucide:x" class="inline-block" width="20" />
-          </button>
-        {:else}
-          <button
-            class="lg:ml-4 ml-1 bg-custom-gradient font-medium md:text-xl text-base text-white md:px-9 md:py-4 px-5 py-2 rounded-full hover:scale-105 transition-all duration-200"
-          >
-            Search
-          </button>
-        {/if}
-      </div>
-      {#if searchResults}
-        <div class="md:w-1/2 lg:top-24 top-16 absolute w-[90%] lg:max-h-64 max-h-52 overflow-y-auto bg-white rounded-xl shadow-md py-4 pl-4">
-          {#if searchResults.data.length > 0}
-            {#each searchResults.data as product, index}
-              <div on:click={() => { goto(`/Products/${product._id}`) }} class="cursor-pointer {index === searchResults.data.length - 1 ? '' : 'border-b'} flex items-center md:gap-10 gap-2 p-1">
-                <div class="border lg:p-3 md:p-2 p-1 rounded-lg">
-                  <img src={imgUrl + product.images[0]} alt="" class="md:w-16 md:h-16 min-w-12 min-h-12 h-12 w-12" />
-                </div>
-                <div>
-                  <h2 class="lg:text-2xl md:text-xl text-base font-semibold text-[#30363C]">{product.productName}</h2>
-                  <p class="lg:text-lg md:text-base text-sm font-bold text-[#111827]">
-                    MRP: <span class="text-gray-600 px-2 text-base line-through">₹{product?.strikePrice || product.price}</span> ₹{product.price}
-                  </p>
-                </div>
-              </div>
-            {/each}
-          {:else}
-            <div class="text-center text-lg mt-4 text-gray-400">No results found</div>
-          {/if}
-        </div>
+            <div class="border lg:p-3 md:p-2 p-1 rounded-lg">
+              <img src={imgUrl + product.images[0]} alt="" class="md:w-16 md:h-16 min-w-12 min-h-12 h-12 w-12" />
+            </div>
+            <div>
+              <h2 class="lg:text-2xl md:text-xl text-base font-semibold text-[#30363C]">
+                {product.productName}
+              </h2>
+              <p class="lg:text-lg md:text-base text-sm font-bold text-[#111827]">
+                MRP: 
+                <span class="text-gray-600 px-2 text-base line-through">₹{product?.strikePrice || product.price}</span>
+                ₹{product.price}
+              </p>
+            </div>
+          </div>
+        {/each}
+      {:else}
+        <div class="text-center text-lg mt-4 text-gray-400">No results found</div>
       {/if}
     </div>
+  {/if}
+</div>
+
 
     <!-- Categories Grid -->
     <div class="flex flex-col md:justify-center justify-start items-center w-full">
       {#if loading || error}
         <!-- Skeleton Loader with ShadCN Skeleton -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 md:mb-10 mb-5 w-3/4">
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 md:mb-5 mb-2 w-3/4">
           {#each Array(6) as _}
             <div class="flex flex-col items-center space-y-2">
               <Skeleton class="w-24 h-24 rounded-full" />
@@ -184,8 +190,8 @@
           {/each}
         </div>
       {:else}
-        <p class="md:text-5xl z-30 text-2xl font-bold md:pb-10 text-primary pb-5">Explore Our Cracker Collections</p>
-        <div class="flex px-4 md:px-0 gap-4 md:gap-6 md:mb-10 mb-5  w-full overflow-x-auto items-start md:justify-start lg:justify-center justify-start scrollbar-hide">
+  <p class="md:text-5xl z-30 text-2xl font-bold text-primary pb-5">Explore Our Cracker Collections</p>
+        <div class="flex px-4 md:px-0 gap-4 md:gap-6 md:mb-10 mb-10 w-full overflow-x-auto items-start md:justify-start lg:justify-center justify-start scrollbar-hide">
           {#each categories as category}
             <div
               on:click={() => {

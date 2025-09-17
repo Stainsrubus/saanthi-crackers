@@ -1,6 +1,5 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import { page } from '$app/stores'; // Import page store to access route
   import { imgUrl } from '$lib/config';
   import { _axios } from '$lib/_axios';
   import { toast } from 'svelte-sonner';
@@ -8,30 +7,28 @@
   import { queryClient } from '$lib/query-client';
   import { createMutation } from '@tanstack/svelte-query';
 
-  // Props for the product card
+  // Props
   export let image: string;
   export let discount: number | null = null;
   export let name: string;
   export let available: boolean = true;
   export let MRP: number;
-  export let unit: string ;
-  // export let strikePrice: number;
+  export let unit: string;
   export let id: string | number;
   export let favorite: boolean = false;
   export let comboOffer: boolean = false;
   export let offerType: string | null = null;
 
+  // Qty state
+  let selectedQty: number = 1;
+  const minQty = 1;
+  const maxQty = 9999;
 
-  // Calculate savings
-  // $: savings = strikePrice > MRP ? strikePrice - MRP : 0;
+  // Price calculations
+  $: unitPrice = Math.round(MRP - (MRP * (discount || 0) / 100));
+  $: totalAmount = unitPrice * selectedQty;
 
-  // Compute card width class based on route for mobile screens
-  $: cardWidthClass = $page.url.pathname === '/' ||
-                    $page.url.pathname === '/offers' ||
-                    ($page.url.pathname.startsWith('/Products/') &&
-                     $page.url.pathname.split('/').length === 3)
-                    ? 'w-40' : 'w-full';
-  // Handle click to navigate to product details page or combo offer page
+  // Navigate
   function handleClick() {
     if (comboOffer) {
       goto(`/comboOffers/${id}`);
@@ -43,9 +40,8 @@
       }
     }
   }
-  // console.log(unit)
 
-  // Handle favorite toggle
+  // Toggle favorite
   async function handleFavorite() {
     const token = localStorage.getItem('token');
     if (!$writableGlobalStore.isLogedIn) {
@@ -60,7 +56,7 @@
         { productId: id },
         {
           headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         }
@@ -69,13 +65,11 @@
       if (response.data.status) {
         favorite = !favorite;
         toast.success(response.data.message);
-      queryClient.invalidateQueries(['wishCount']);
-
+        queryClient.invalidateQueries(['wishCount']);
       } else {
         toast.error(response.data.message || 'Failed to toggle favorite');
       }
     } catch (error: any) {
-      // console.error('Failed to toggle favorite:', error);
       if (error.response?.status === 401) {
         toast.error('Session expired. Please log in again.');
         localStorage.removeItem('token');
@@ -86,11 +80,12 @@
     }
   }
 
-  const addToCartMutation = createMutation({
-    mutationFn: async () => {
+  // Cart mutation
+  const updateCartMutation = createMutation({
+    mutationFn: async (qty: number) => {
       const token = localStorage.getItem('token');
       if (!token || !$writableGlobalStore.isLogedIn) {
-        throw new Error('Please log in to add to cart');
+        throw new Error('Please log in to add/update cart');
       }
 
       const response = await _axios.post(
@@ -99,133 +94,125 @@
           products: [
             {
               productId: id,
-              quantity: 1,
+              quantity: qty,
             },
           ],
         },
         {
           headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         }
       );
 
       if (!response.data.status) {
-        throw new Error(response.data.message || 'Failed to add to cart');
+        throw new Error(response.data.message || 'Failed to update cart');
       }
       return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['cart']);
-      toast.success('Product added to cart successfully!');
+      toast.success('Cart updated successfully!');
     },
     onError: (error: any) => {
-      if (error.message === 'Please log in to add to cart') {
+      if (error.message === 'Please log in to add/update cart') {
         toast.error(error.message);
         goto('/login');
       } else {
-        toast.error(error.message || 'An error occurred while adding to cart');
+        toast.error(error.message || 'An error occurred while updating cart');
       }
     },
   });
 
-  // Handle add to cart
-  function handleAddToCart() {
-    $addToCartMutation.mutate();
-  }
+  // Sync qty with cart
+  async function handleQtyChange() {
+  if (selectedQty < minQty) selectedQty = minQty;
+  if (selectedQty > maxQty) selectedQty = maxQty;
 
+  try {
+    await $updateCartMutation.mutateAsync(selectedQty);
+  } catch (err) {
+    console.error("Cart update failed", err);
+  }
+}
 </script>
 
+<!-- Product Card -->
 <div
-  class="relative group bg-white border rounded-xl shadow-md overflow-hidden transition-transform duration-200 {cardWidthClass} md:w-56"
+  class="relative group bg-white border rounded-xl shadow-md overflow-hidden transition-transform duration-200 hover:scale-[1.02] 
+         w-full sm:w-44 md:w-56 lg:w-64"
   style="cursor: pointer;"
   on:click={handleClick}
   role="button"
   tabindex="0"
   on:keydown={(e) => e.key === 'Enter' && handleClick()}
 >
-  <!-- Discount Badge -->
-  <!-- {#if discount}
-    <div
-      class="absolute top-0 right-0 bg-[#FA8232] text-white md:text-sm text-xs font-bizGothic font-medium rounded-full px-4 py-2"
-    >
-      {discount}% OFF
-    </div>
-  {/if} -->
+  <!-- Favorite -->
+  <button
+    class="absolute top-2 right-2 bg-white h-8 w-8 flex justify-center items-center rounded-full shadow hover:scale-110 transition-all z-20"
+    on:click|stopPropagation={handleFavorite}
+  >
+    {#if favorite}
+      <img class="px-1.5" src="/svg/fav-filled.svg" alt="Favorited" />
+    {:else}
+      <img class="px-1.5" src="/svg/fav.svg" alt="Favorite" />
+    {/if}
+  </button>
 
-  <!-- Product Image with Overlay and Icons -->
-  <div class="relative md:h-48 h-40 flex justify-center items-center">
+  <!-- Image -->
+  <div class="relative h-40 sm:h-44 md:h-48 lg:h-52 flex justify-center items-center bg-gray-50">
     <img
-      class="object-cover max-h-full max-w-full"
+      class="object-contain max-h-full max-w-full"
       src={imgUrl + image}
       alt={name}
+      loading="lazy"
     />
-    <!-- Overlay on hover -->
-    {#if available}
-      <div
-        class="absolute inset-0 bg-black bg-opacity-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex justify-center items-center gap-4"
-      >
-        <!-- Heart Icon -->
-        <button
-          class="bg-white h-10 w-10 flex justify-center items-center rounded-full transition-all hover:scale-110 duration-200"
-          on:click|stopPropagation={handleFavorite}
-          aria-label={favorite ? 'Remove from favorites' : 'Add to favorites'}
-        >
-          {#if favorite}
-            <img class="px-2.5" src="/svg/fav-filled.svg" alt="Favorited" />
-          {:else}
-            <img class="px-2.5" src="/svg/fav.svg" alt="Favorite" />
-          {/if}
-        </button>
-        <!-- Cart Icon -->
-        <button
-          class="bg-white h-10 w-10 flex justify-center items-center rounded-full transition-all hover:scale-110 duration-200"
-          on:click|stopPropagation={handleAddToCart}
-          aria-label="Add to cart"
-        >
-          <img class="p-2" src="/svg/cart.svg" alt="Cart" />
-        </button>
-      </div>
-      <!-- {:else}
-      <div class="absolute">
-        <p class="text-red-500 text-lg text-semibold  rounded-lg px-2">Out of Stock</p>
-      </div> -->
-    {/if}
   </div>
 
-  <!-- Product Details -->
-  <div class="md:px-4 px-2 py-2 border-t shadow-md">
-    <!-- Product Name -->
+  <!-- Details -->
+  <div class="px-3 md:px-4 py-2 border-t shadow-inner relative flex flex-col gap-1">
     <h3
-      class="font-medium md:text-base text-sm text-[#222222] py-1 capitalize overflow-hidden text-ellipsis whitespace-nowrap"
+      class="font-medium text-sm sm:text-base text-[#222222] capitalize truncate"
+      title={name}
     >
       {name}
     </h3>
 
-    <!-- Price Section -->
-    <div class="flex items-center gap-2 mt-1">
-      <span class="text-[#565555] md:text-base font-medium text-sm">₹{Math.round(MRP - (MRP * (discount || 0) / 100))}</span> <span>/ {unit}</span>
+    <div class="flex items-center gap-2">
+      <span class="text-[#565555] font-semibold text-sm sm:text-base">₹{unitPrice}</span>
+      <span class="text-xs sm:text-sm">/ {unit}</span>
       {#if discount}
-        <span class="text-[#848484] md:text-sm text-xs line-through">₹{MRP}</span>
+        <span class="text-[#848484] text-xs sm:text-sm line-through">₹{MRP}</span>
       {/if}
     </div>
 
-    <!-- Savings Section -->
-    <!-- {#if savings > 0}
-      <div
-        class="mt-1 py-2 border-t border-[#EDEDED] md:text-base text-sm text-[#249B3E]"
-      >
-        Save - ₹{savings}
+    <div class="flex flex-wrap items-center justify-between gap-2 mt-1">
+      <div class="flex items-center gap-1 min-w-0">
+        <span class="text-[#848484] text-xs sm:text-sm">Total :</span>
+        <span class="text-[#30363C] font-semibold text-sm sm:text-base">₹{totalAmount}</span>
       </div>
-    {/if} -->
+      <div class="flex items-center gap-1 min-w-[110px]">
+        <label for="qty-input-{id}" class="font-medium text-xs sm:text-sm">Qty:</label>
+        <input
+          id="qty-input-{id}"
+          type="number"
+          min={minQty}
+          max={maxQty}
+          bind:value={selectedQty}
+          class="border rounded px-2 py-1 text-xs sm:text-sm w-16 min-w-[60px] text-center"
+          on:click|stopPropagation
+          on:input|stopPropagation={handleQtyChange}
+          inputmode="numeric"
+          pattern="[0-9]*"
+        />
+      </div>
+    </div>
   </div>
 
-  <!-- Out of Stock Overlay -->
+  <!-- Out of Stock -->
   {#if !available}
-    <div
-      class="absolute inset-0 bg-black/30 flex justify-center items-center text-white text-lg font-medium"
-    >
+    <div class="absolute inset-0 bg-black/40 flex justify-center items-center text-white text-lg font-medium">
       Out of Stock
     </div>
   {/if}

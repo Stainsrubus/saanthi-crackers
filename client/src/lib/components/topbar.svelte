@@ -166,19 +166,24 @@
     queryKey: ['notifications'],
     queryFn: async ({ pageParam = 1 }) => {
       const token = localStorage.getItem('token');
-      const userData = localStorage.getItem('userData');
-      // if (!token || !userData) {
+      // const userData = localStorage.getItem('userData');
+       const userId = $writableGlobalStore.userDetails.userId;
+      // if (!token || !userId) {
       //   writableGlobalStore.update((store) => ({
       //     ...store,
       //     isLogedIn: false,
-      //     userId: null,
+      //     userDetails: {
+      //       profileImage: '',
+      //       userName: '',
+      //       mobile: '',
+      //       userId: ''
+      //     },
       //   }));
       //   throw new Error('No token or user data found. Please log in.');
       // }
       try {
-        const userId = $writableGlobalStore.userDetails.userId;
-        console.log('Fetching notifications for userId:', userId);
-        if (!userId) throw new Error('User ID not found');
+        // console.log('Fetching notifications for userId:', userId);
+        // if (!userId) throw new Error('User ID not found');
         const response = await _axios.get(`/notification?page=${pageParam}&limit=10`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -580,63 +585,64 @@
 
   <div class="w-1/2 flex gap-3 justify-end">
     <!-- Search Bar (Hidden on Mobile) -->
-    <div class="hidden md:block flex-1 mx-4 lg:max-w-96 md:max-w-72">
-      <div class="border flex w-full rounded-full bg-white md:p-1 p-1">
-        <div class="relative w-full">
-          <input
-            type="text"
-            placeholder="Search products"
-            class="w-full absolute top-1/2 transform -translate-y-1/2 md:text-xl text-lg placeholder:text-base pl-9 pr-4 rounded-full focus:outline-none focus:ring-0 text-gray-700"
-            oninput={handleSearch}
-            bind:value={searchQuery}
-          />
-          <img
-            class="absolute left-1 top-1/2 transform -translate-y-1/2 text-gray-400"
-            src="/svg/search.svg"
-            alt="search"
-          />
-        </div>
-        {#if searchResults}
-          <button
-            onclick={clearSearch}
-            class="ml-4 bg-custom-gradient font-medium md:text-lg text-lg text-white px-2 py-2 rounded-full hover:bg-[#156aa3] transition-colors duration-200 flex items-center justify-center"
+<div class="hidden md:block flex-1 mx-4 lg:max-w-96 md:max-w-72 relative">
+  <!-- Search bar -->
+  <div class="flex w-full rounded-full bg-white md:p-1 p-1 shadow-md border border-gray-300 focus-within:ring-2 focus-within:ring-purple-500">
+    <div class="relative w-full">
+      <input
+        type="text"
+        placeholder="Search products"
+        class="w-full md:text-xl text-lg placeholder:text-base pl-9 pr-4 py-2 rounded-full focus:outline-none text-gray-700"
+        oninput={handleSearch}
+        bind:value={searchQuery}
+      />
+      <img
+        class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5"
+        src="/svg/search.svg"
+        alt="search"
+      />
+    </div>
+
+    {#if searchResults}
+      <button
+        onclick={clearSearch}
+        class="ml-2 bg-custom-gradient font-medium text-white px-3 py-2 rounded-full hover:bg-[#156aa3] transition-colors duration-200 flex items-center justify-center"
+      >
+        <Icon icon="lucide:x" class="inline-block" width="20" />
+      </button>
+    {/if}
+  </div>
+
+  <!-- Search results dropdown -->
+  {#if searchResults}
+    <div class="absolute left-0 right-0 mt-2 lg:max-w-96 md:max-w-72 lg:max-h-64 max-h-52 overflow-y-auto bg-white rounded-3xl shadow-md py-4 pl-4 z-50">
+      {#if searchResults.data.length > 0}
+        {#each searchResults.data as product, index}
+          <div
+            onclick={() => {
+              goto(`/Products/${product._id}`);
+              searchResults = null;
+              searchQuery = '';
+            }}
+            class="cursor-pointer {index === searchResults.data.length - 1 ? '' : 'border-b'} flex items-center md:gap-10 gap-2 p-1"
           >
-            <Icon icon="lucide:x" class="inline-block" width="24" />
-          </button>
-        {:else}
-          <button
-            class="lg:ml-1 bg-custom-gradient font-medium md:text-lg text-lg text-white px-5 py-2 rounded-full hover:bg-[#156aa3] transition-colors duration-200"
-          >
-            Search
-          </button>
-        {/if}
-      </div>
-      {#if searchResults}
-        <div class="w-full top-32 absolute lg:max-w-96 md:max-w-72 lg:max-h-64 max-h-52 overflow-y-auto bg-white rounded-3xl shadow-md py-4 pl-4 z-50">
-          {#if searchResults.data.length > 0}
-            {#each searchResults.data as product, index}
-              <div onclick={() => {
-                goto(`/Products/${product._id}`);
-                searchResults = null;
-                searchQuery = '';
-              }} class="cursor-pointer {index === searchResults.data.length - 1 ? '' : 'border-b'} flex items-center md:gap-10 gap-2 p-1">
-                <div class="border lg:p-3 md:p-2 p-1 rounded-lg">
-                  <img src={imgUrl + product.images[0]} alt="" class="min-w-12 min-h-12 h-12 w-12" />
-                </div>
-                <div>
-                  <h2 class="md:text-xl text-base font-semibold text-[#30363C]">{product.productName}</h2>
-                  <p class="md:text-base text-sm font-bold text-[#111827]">
-                    MRP: <span class="text-gray-600 px-2 text-base line-through">₹{product?.strikePrice || product.price}</span> ₹{product.price}
-                  </p>
-                </div>
-              </div>
-            {/each}
-          {:else}
-            <div class="text-center text-lg mt-4 text-gray-400">No results found</div>
-          {/if}
-        </div>
+            <div class="border lg:p-3 md:p-2 p-1 rounded-lg">
+              <img src={imgUrl + product.images[0]} alt="" class="min-w-12 min-h-12 h-12 w-12" />
+            </div>
+            <div>
+              <h2 class="md:text-xl text-base font-semibold text-[#30363C]">{product.productName}</h2>
+              <p class="md:text-base text-sm font-bold text-[#111827]">
+                MRP: <span class="text-gray-600 px-2 text-base line-through">₹{product?.strikePrice || product.price}</span> ₹{product.price}
+              </p>
+            </div>
+          </div>
+        {/each}
+      {:else}
+        <div class="text-center text-lg mt-4 text-gray-400">No results found</div>
       {/if}
     </div>
+  {/if}
+</div>
 
     <!-- User Profile/Login -->
     <div onclick={() => goto('/cart')} class="flex md:hidden items-center gap-2 cursor-pointer">

@@ -674,17 +674,17 @@
         <!-- Specifications -->
         {#if $productQuery.data.specifications && $productQuery.data.specifications.length > 0}
           <div>
-            <div class="overflow-hidden w-[70%]">
+            <div class="overflow-hidden w-full max-w-xl mx-auto">
               <div>
                 <h3 class="text-lg font-semibold text-gray-900 bg-red-50 p-3 rounded-lg">Specifications</h3>
               </div>
-              <div class="py-6 space-y-6">
+              <div class="py-2 space-y-4">
                 {#each visibleSpecs as spec}
                   <div>
-                    <h4 class="text-base font-semibold text-gray-900 mb-3 p-2 px-4 rounded-lg bg-gray-50">
+                    <h4 class="text-base font-semibold text-gray-900 md:mb-0.5 md:p-1 px-3 rounded-lg bg-gray-50">
                       {spec.name}
                     </h4>
-                    <div class="space-y-2 lg:w-[60%] md:w-[70%] w-[90%] pl-8">
+                    <div class="space-y-0 w-full pl-3 lg:mt-0.5 md:mt-0.4 mt-0">
                       {#each Object.entries(spec.fields) as [key, value]}
                         <div class="flex justify-between py-2 border-b border-gray-100 last:border-b-0">
                           <span class="text-gray-600 font-medium">{key}</span>
@@ -696,14 +696,18 @@
                 {/each}
                 {#if !showAllSpecs && $productQuery.data.specifications.length > 2}
                   <div class="relative opacity-40">
-                    <h4 class="text-base font-semibold text-gray-900 mb-3 pb-2">
+                    <h4 class="text-base font-semibold text-gray-900 md:mb-3 md:pb-2">
                       {$productQuery.data.specifications[2].name}
                     </h4>
                     <div class="space-y-2">
                       {#each Object.entries($productQuery.data.specifications[2].fields).slice(0, 2) as [key, value]}
                         <div class="flex justify-between py-2">
                           <span class="text-gray-600 font-medium">{key}</span>
-                          <span class="text-gray-900">{value}</span>
+                          <span class="text-gray-900 truncate max-w-[120px] sm:max-w-none">
+                            {typeof value === 'string' && value.length > 20
+                              ? `${value.slice(0, 20)}...`
+                              : value}
+                          </span>
                         </div>
                       {/each}
                     </div>
@@ -713,7 +717,7 @@
                 {#if $productQuery.data.specifications.length > 2}
                   <button
                     onclick={() => showAllSpecs = !showAllSpecs}
-                    class="w-full mt-4 py-2 text-blue-600 hover:text-blue-800 font-medium border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
+                    class="w-full md:mt-2 md:py-1 text-blue-600 hover:text-blue-800 font-medium border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors"
                   >
                     {showAllSpecs ? 'Show Less Specifications' : 'Show All Specifications'}
                   </button>
@@ -723,7 +727,7 @@
           </div>
         {/if}
         <!-- Footer space -->
-        <div class="pb-8"></div>
+  <div class="pb-2"></div>
       </div>
     </div>
   {/if}
