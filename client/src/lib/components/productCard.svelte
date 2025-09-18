@@ -139,7 +139,7 @@
 </script>
 
 <!-- ✅ Mobile View (Qty on right side) -->
-<div class="sm:hidden w-full bg-white border rounded-lg shadow p-4 flex items-start gap-4">
+<div class="sm:hidden w-full bg-white border rounded-lg shadow p-4 flex items-start gap-4 cursor-pointer" on:click={() => handleClick()}>
   <!-- Left side (Product Image) -->
   <div class="flex-shrink-0 w-20">
     <img
@@ -169,7 +169,7 @@
     </p>
 
     <!-- Qty Selector Box -->
-<div class="absolute bottom-0 right-0 mb-2 mr-2 flex items-center border border-gray-300 rounded-md overflow-hidden bg-gray-50">
+<div class="absolute bottom-0 right-0 mb-2 mr-2 flex items-center border border-gray-300 rounded-md overflow-hidden bg-gray-50" on:click|stopPropagation>
   <!-- Minus Button -->
   <button
     class="w-8 h-8 flex items-center justify-center border-r border-gray-300 text-gray-700 font-bold text-lg hover:bg-gray-200"

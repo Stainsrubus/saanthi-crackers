@@ -547,7 +547,7 @@
           src={currentPath === '/Products' ? '/svg/rocket-filled.svg' : '/svg/rocket.svg'}
           alt="fac"
         />
-        <p class={`${currentPath === '/Products' ? 'text-primary' : 'text-black'}`}>Products</p>
+        <p class={`${currentPath === '/Products' ? 'text-primary' : 'text-black'}`}></p>
       </div>
       <div onclick={() => goto('/wishlist')} class="flex items-center gap-2 cursor-pointer">
         <img

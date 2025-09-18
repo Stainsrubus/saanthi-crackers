@@ -548,20 +548,18 @@
 	</aside>
   
 	<!-- Main Content Area -->
-	<div class="flex-1 overflow-y-auto p-4 my-10 md:px-6 md:pb-6 lg:px-4 lg:pb-8">
-	  <main class="flex flex-col items-start gap-5 p-0 py-0 lg:flex-row lg:px-3">
-		<p class="lg:hidden block text-3xl font-bold">Products</p>
-		<div class="flex items-center justify-between lg:mb-4">
-		  <div class="w-full">
-			<button
-			  on:click={toggleMobileSidebar}
-			  class="bg-custom-gradient flex items-center rounded-full px-6 py-2 text-base text-white lg:hidden"
-			>
-			  <Icon icon="mdi:filter" class="mr-2 h-5 w-5" />
-			  Filters
-			</button>
-		  </div>
-		</div>
+		<div class="flex-1 overflow-y-auto p-4 mt-2 md:px-4 md:pb-6 lg:px-2 lg:pb-8">
+			<main class="flex flex-col items-start gap-5 p-0 py-0 lg:flex-row lg:px-3">
+				<div class="flex items-center justify-between w-full lg:mb-4">
+					<p class="lg:hidden block text-3xl font-bold m-0">Products</p>
+					<button
+						on:click={toggleMobileSidebar}
+						class="bg-custom-gradient flex items-center rounded-full px-6 py-2 text-base text-white lg:hidden ml-auto"
+					>
+						<Icon icon="mdi:filter" class="mr-2 h-5 w-5" />
+						Filters
+					</button>
+				</div>
   
 		<!-- Mobile Sidebar Overlay -->
 		<div
@@ -779,30 +777,30 @@
 			  <p class="text-lg text-[#4F585E]">No products found</p>
 			</div>
 		  {:else}
-			<div>
-			  <div class="card grid grid-cols-2 justify-center gap-3 md:flex md:flex-wrap md:justify-normal lg:gap-10">
-				{#each products as product (product.id)}
-				  <ProductCard
-					id={product.id}
-					image={product.image}
-					discount={product.discount}
-					name={product.name}
-					MRP={product.MRP}
-					unit={product.unit}
-					favorite={product.favorite}
-					available={product.available}
-				  />
-				{/each}
-				{#if $productsQuery.isFetchingNextPage}
-			  <div class="flex items-center justify-center w-full">
-				<Icon icon="line-md:loading-twotone-loop" class="w-8 h-8 text-zinc-500" />
-			  </div>
-			{/if}
-			  </div>
-		
-			</div>
-			
-		  {/if}
+						<div>
+							<div class="card justify-center gap-3 md:flex md:flex-wrap md:justify-normal lg:gap-10">
+								{#each products as product (product.id)}
+									<div class="mb-2 md:mb-0">
+										<ProductCard
+											id={product.id}
+											image={product.image}
+											discount={product.discount}
+											name={product.name}
+											MRP={product.MRP}
+											unit={product.unit}
+											favorite={product.favorite}
+											available={product.available}
+										/>
+									</div>
+								{/each}
+								{#if $productsQuery.isFetchingNextPage}
+									<div class="flex items-center justify-center w-full">
+										<Icon icon="line-md:loading-twotone-loop" class="w-8 h-8 text-zinc-500" />
+									</div>
+								{/if}
+							</div>
+						</div>
+					{/if}
 		</div>
 	  </main>
 	</div>
