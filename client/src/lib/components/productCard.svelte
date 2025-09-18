@@ -20,7 +20,8 @@
   export let offerType: string | null = null;
 
   // Qty state
-  let selectedQty: number = 1;
+  let selectedQty: any = 1;
+  let showQtyDropdown = false;
   const minQty = 1;
   const maxQty = 9999;
 
@@ -126,16 +127,58 @@
   });
 
   // Sync qty with cart
-  async function handleQtyChange() {
-  if (selectedQty < minQty) selectedQty = minQty;
-  if (selectedQty > maxQty) selectedQty = maxQty;
-
-  try {
-    await $updateCartMutation.mutateAsync(selectedQty);
-  } catch (err) {
-    console.error("Cart update failed", err);
+  async function handleQtyChange(qty) {
+    // If 'Qty' label is selected, remove from cart
+    if (qty === 'Qty') {
+      // Only remove from cart if product is already in cart
+      if (selectedQty > 1) {
+        const token = localStorage.getItem('token');
+        if (!token || !$writableGlobalStore.isLogedIn) {
+          toast.error('Please log in to update cart');
+          goto('/login');
+          return;
+        }
+        try {
+          const response = await _axios.post(
+            comboOffer ? '/cart/removeCombo' : '/cart/remove',
+            {
+              products: [
+                {
+                  productId: id,
+                },
+              ],
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+              },
+            }
+          );
+          if (response.data.status) {
+            selectedQty = "Qty";
+            toast.success('Product removed from cart');
+            queryClient.invalidateQueries(['cart']);
+          } else {
+            toast.error(response.data.message || 'Failed to remove from cart');
+          }
+        } catch (err) {
+          toast.error('Error removing from cart');
+        }
+      }
+      // If not in cart, just close dropdown and do nothing
+      return;
+    }
+    // Otherwise, add/update cart
+    if (qty < minQty) qty = minQty;
+    if (qty > maxQty) qty = maxQty;
+    selectedQty = qty;
+    try {
+      await $updateCartMutation.mutateAsync(selectedQty);
+    } catch (err) {
+      console.error("Cart update failed", err);
+    }
   }
-}
 </script>
 
 <!-- ✅ Mobile View (Qty on right side) -->
@@ -168,30 +211,25 @@
       GST: {discount ? `${discount}%` : '2%'}
     </p>
 
-    <!-- Qty Selector Box -->
-<div class="absolute bottom-0 right-0 mb-2 mr-2 flex items-center border border-gray-300 rounded-md overflow-hidden bg-gray-50" on:click|stopPropagation>
-  <!-- Minus Button -->
-  <button
-    class="w-8 h-8 flex items-center justify-center border-r border-gray-300 text-gray-700 font-bold text-lg hover:bg-gray-200"
-    on:click={() => { if (selectedQty > minQty) { selectedQty--; handleQtyChange(); } }}
-  >-</button>
-
-  <!-- Input Box -->
-  <input
-    type="number"
-    min={minQty}
-    max={maxQty}
-    bind:value={selectedQty}
-    on:change={handleQtyChange}
-    class="w-12 text-center text-base font-semibold border-0 bg-transparent focus:outline-none"
-  />
-
-  <!-- Plus Button -->
-  <button
-    class="w-8 h-8 flex items-center justify-center border-l border-gray-300 text-gray-700 font-bold text-lg hover:bg-gray-200"
-    on:click={() => { if (selectedQty < maxQty) { selectedQty++; handleQtyChange(); } }}
-  >+</button>
-</div>
+    <!-- Qty Dropdown -->
+    <div class="absolute bottom-0 right-0 mb-2 mr-2 flex items-center" on:click|stopPropagation>
+      <span class="text-xs text-gray-600 mr-1">Qty</span>
+      <div class="relative">
+        <button type="button" class="w-14 text-center text-base font-semibold border border-gray-300 rounded bg-gray-50 focus:outline-none" on:click={() => showQtyDropdown = !showQtyDropdown}>
+          {selectedQty === null || selectedQty === undefined || selectedQty === 1 ? 'Qty' : selectedQty}
+        </button>
+              {#if showQtyDropdown}
+                <div class="absolute z-[99999] left-0 mt-1 w-20 bg-white border rounded shadow-lg max-h-48 overflow-y-auto pointer-events-auto">
+                  <div class="px-3 py-1 hover:bg-gray-100 cursor-pointer text-center font-semibold" on:click={() => { handleQtyChange('Qty'); showQtyDropdown = false; }}>Qty</div>
+                  {#each Array(100).fill(0).map((_, i) => i + 1) as qty}
+                    <div class="px-3 py-1 hover:bg-gray-100 cursor-pointer text-center" on:click={() => { selectedQty = qty; showQtyDropdown = false; handleQtyChange(qty); }}>
+                      {qty}
+                    </div>
+                  {/each}
+                </div>
+              {/if}
+      </div>
+    </div>
 
   </div>
 </div>
@@ -250,19 +288,25 @@
         <span class="text-[#848484] text-xs sm:text-sm">Total :</span>
         <span class="text-[#30363C] font-semibold text-sm sm:text-base">₹{totalAmount}</span>
       </div>
-      <div class="flex items-center gap-1 min-w-[110px]">
-        <label for="qty-input-{id}" class="font-medium text-xs sm:text-sm">Qty:</label>
-        <input
-          id="qty-input-{id}"
-          type="number"
-          min={minQty}
-          max={maxQty}
-          bind:value={selectedQty}
-          class="border rounded px-2 py-1 text-xs sm:text-sm w-16 min-w-[60px] text-center"
-          on:click|stopPropagation
-          on:input|stopPropagation={handleQtyChange}
-        />
+      <div class="flex items-center gap-2 min-w-[110px]" on:click|stopPropagation>
+  <span class="text-xs text-gray-600">Qty</span>
+  <div class="relative">
+        <button type="button" class="w-14 text-center text-base font-semibold border border-gray-300 rounded bg-gray-50 focus:outline-none" on:click={() => showQtyDropdown = !showQtyDropdown}>
+          {selectedQty === null || selectedQty === undefined || selectedQty === 1 ? 'Qty' : selectedQty}
+        </button>
+        {#if showQtyDropdown}
+          <div class="absolute z-999 left-0 mt-1 w-20 bg-white border rounded shadow-lg max-h-48 overflow-y-auto">
+            <div class="px-3 py-1 hover:bg-gray-100 cursor-pointer text-center font-semibold" on:click={() => { handleQtyChange('Qty'); showQtyDropdown = false; }}>Qty</div>
+            {#each Array(100).fill(0).map((_, i) => i + 1) as qty}
+              <div class="px-3 py-1 hover:bg-gray-100 cursor-pointer text-center" on:click={() => { selectedQty = qty; showQtyDropdown = false; handleQtyChange(qty); }}>
+                {qty}
+              </div>
+            {/each}
+          </div>
+        {/if}
       </div>
+</div>
+
     </div>
   </div>
 
@@ -273,4 +317,3 @@
     </div>
   {/if}
 </div>
-

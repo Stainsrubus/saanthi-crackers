@@ -645,7 +645,7 @@
 </div>
 
     <!-- User Profile/Login -->
-    <div onclick={() => goto('/cart')} class="flex md:hidden items-center gap-2 cursor-pointer">
+    <div onclick={() => goto('/cart')} class="flex xl:hidden items-center gap-2 cursor-pointer">
       <div class="relative">
         <img
           src={currentPath === '/cart' ? '/svg/cart-filled.svg' : '/svg/cart.svg'}
