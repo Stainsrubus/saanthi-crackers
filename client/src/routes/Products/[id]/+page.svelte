@@ -167,6 +167,7 @@
       isFavorite = false; // Reset favorite state
       productId = currentProductId;
       queryClient.invalidateQueries({ queryKey: ['product', productId] });
+      $productQuery.refetch();
       previousProductId = productId;
     }
     if ($productQuery.data) {

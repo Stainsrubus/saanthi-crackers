@@ -549,7 +549,7 @@
   
 	<!-- Main Content Area -->
 		<div class="flex-1 overflow-y-auto p-4 mt-2 md:px-4 md:pb-6 lg:px-2 lg:pb-8">
-			<main class="flex flex-col items-start gap-5 p-0 py-0 lg:flex-row lg:px-3">
+			<main class="flex !flex-col items-start gap-5 p-0 py-0 lg:flex-row lg:px-3">
 				<div class="flex items-center justify-between w-full lg:mb-4">
 					<p class="lg:hidden block text-3xl font-bold m-0">Products</p>
 					<button
