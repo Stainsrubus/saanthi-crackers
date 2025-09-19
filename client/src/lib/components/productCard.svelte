@@ -175,7 +175,7 @@
   
   // Handle remove product case (qty = 0)
   if (numericQty === 0) {
-    removeProductMutation.mutate(id.toString());
+    $removeProductMutation.mutate(id.toString());
     selectedQty = '0'; // Reset to 0
     return;
   }
@@ -188,7 +188,7 @@
 
   try {
     console.log('Updating cart with qty:', numericQty);
-    await updateCartMutation.mutateAsync(numericQty);
+    await $updateCartMutation.mutateAsync(numericQty);
   } catch (err) {
     console.error('Cart update failed', err);
   }
@@ -199,10 +199,23 @@ function handleSelectOpen() {
   $openSelectId = $openSelectId === id.toString() ? null : id.toString();
 }
 
+function handleKeydown(event: KeyboardEvent, callback: Function) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      callback();
+    }
+  }
+
 </script>
 
 <!-- Mobile View -->
-<div class="sm:hidden w-full bg-white border rounded-lg shadow p-4 flex items-start gap-4 cursor-pointer" on:click={() => handleClick()}>
+<div 
+  class="sm:hidden w-full bg-white border rounded-lg shadow p-4 flex items-start gap-4 cursor-pointer" 
+  on:click={handleClick}
+  on:keydown={(e) => handleKeydown(e, handleClick)}
+  role="button"
+  tabindex="0"
+>
   <div class="flex-shrink-0 w-20">
     <img src={imgUrl + image} alt={name} class="w-20 h-20 object-contain rounded" />
   </div>
@@ -227,17 +240,18 @@ function handleSelectOpen() {
         name={`qty-${id}`}
         bind:value={selectedQty}
         on:open={() => handleSelectOpen()}
+        onValueChange={(value) => handleQtyChange(value)}
         open={$openSelectId === id.toString()}
       >
         <Select.Trigger class="flex items-center justify-between w-14 text-base font-semibold">
-  <span>
-    {selectedQty === '0' || selectedQty === ' ' ? '' : selectedQty}
-  </span>
-</Select.Trigger>
+          <span>
+            {selectedQty === '0' || selectedQty === ' ' ? '' : selectedQty}
+          </span>
+        </Select.Trigger>
         <Select.Content class="z-[30] !min-w-14 max-h-32">
           <Select.Group>
             {#each qtyOptions as qty (qty.value)}
-              <Select.Item value={qty.value} label={qty.label} on:select={() => handleQtyChange(qty.value)}>
+              <Select.Item value={qty.value} label={qty.label}>
                 {qty.label}
               </Select.Item>
             {/each}
@@ -248,18 +262,18 @@ function handleSelectOpen() {
   </div>
 </div>
 
-<!-- Tablet + Desktop View -->
+<!-- Tablet + Desktop View - Fixed -->
 <div
   class="hidden sm:block relative group bg-white border rounded-xl shadow-md overflow-hidden transition-transform duration-200 hover:scale-[1.02] w-full sm:w-44 md:w-56 lg:w-64"
-  style="cursor: pointer;"
   on:click={handleClick}
+  on:keydown={(e) => handleKeydown(e, handleClick)}
   role="button"
   tabindex="0"
-  on:keydown={(e) => e.key === 'Enter' && handleClick()}
 >
   <button
     class="absolute top-2 right-2 bg-white h-8 w-8 flex justify-center items-center rounded-full shadow hover:scale-110 transition-all z-20"
     on:click|stopPropagation={handleFavorite}
+    aria-label={favorite ? 'Remove from favorites' : 'Add to favorites'}
   >
     {#if favorite}
       <img class="px-1.5" src="/svg/fav-filled.svg" alt="Favorited" />
@@ -293,15 +307,16 @@ function handleSelectOpen() {
           name={`qty-${id}`}
           bind:value={selectedQty}
           on:open={() => handleSelectOpen()}
+          onValueChange={(value) => handleQtyChange(value)}
           open={$openSelectId === id.toString()}
         >
           <Select.Trigger class="w-14 text-center text-base font-semibold">
-            {qtyOptions.find((q) => q.value === selectedQty)?.label ?? ''}
+            {selectedQty === '0' || selectedQty === ' ' ? '' : selectedQty}
           </Select.Trigger>
           <Select.Content class="z-[30] !min-w-14 max-h-32">
             <Select.Group class="">
               {#each qtyOptions as qty (qty.value)}
-                <Select.Item value={qty.value} label={qty.label} on:select={() => handleQtyChange(qty.value)}>
+                <Select.Item value={qty.value} label={qty.label}>
                   {qty.label}
                 </Select.Item>
               {/each}

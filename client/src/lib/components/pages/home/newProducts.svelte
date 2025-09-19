@@ -92,7 +92,7 @@
   <!-- <div class="mt-10"> -->
     <div class="flex items-start gap-2 mt-1 mb-1">
       <img src="/svg/firework1.svg" alt="">
-      <h2 class="lg:text-4xl text-2xl font-bold text-primary mb-2 text-left">Our Products..</h2>
+      <h2 class="lg:text-4xl text-2xl font-bold text-primary mb-2 text-left">Our Products</h2>
       <img class="scale-x-[-1]" src="/svg/firework1.svg" alt="">
     </div>
     {#if productsLoading || productsError}
