@@ -8,6 +8,7 @@
   import { createMutation } from '@tanstack/svelte-query';
   import * as Select from '$lib/components/ui/select/index.js';
   import { writable } from 'svelte/store';
+  import { get } from 'svelte/store';
 
   // Global store to track open select box
   const openSelectId = writable<string | null>(null);
@@ -94,108 +95,110 @@
     }
   }
 
-  // Cart mutation
-  const updateCartMutation = createMutation({
-    mutationFn: async (qty: number) => {
+  const removeProductMutation = createMutation({
+    mutationFn: async (productId: string) => {
       const token = localStorage.getItem('token');
-      if (!token || !$writableGlobalStore.isLogedIn) {
-        throw new Error('Please log in to add/update cart');
-      }
+      if (!token) throw new Error('No token found');
 
-      const response = await _axios.post(
-        comboOffer ? '/cart/updateCombo' : '/cart/update',
-        {
-          products: [
-            {
-              productId: id,
-              quantity: qty,
-            },
-          ],
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await _axios.delete(`/cart/remove-product/${productId}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
 
-      if (!response.data.status) {
-        throw new Error(response.data.message || 'Failed to update cart');
-      }
+      if (!response.data.status) throw new Error(response.data.message);
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['cart']);
-      toast.success('Cart updated successfully!');
+      queryClient.invalidateQueries(['cartCount']);
+      toast.success('Product removed successfully!');
     },
-    onError: (error: any) => {
-      if (error.message === 'Please log in to add/update cart') {
-        toast.error(error.message);
-        goto('/login');
-      } else {
-        toast.error(error.message || 'An error occurred while updating cart');
-      }
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to remove product');
     },
   });
 
-  // Sync qty with cart
-  async function handleQtyChange(qty: string) {
-    console.log('Selected Qty:', qty);
-    if (qty === 'Qty') {
-      if (parseInt(selectedQty.toString()) > 1) {
-        const token = localStorage.getItem('token');
-        if (!token || !$writableGlobalStore.isLogedIn) {
-          toast.error('Please log in to update cart');
-          goto('/login');
-          return;
-        }
-        try {
-          const response = await _axios.post(
-            comboOffer ? '/cart/removeCombo' : '/cart/remove',
-            {
-              products: [
-                {
-                  productId: id,
-                },
-              ],
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json',
-              },
-            }
-          );
-          if (response.data.status) {
-            selectedQty = 'Qty';
-            toast.success('Product removed from cart');
-            queryClient.invalidateQueries(['cart']);
-          } else {
-            toast.error(response.data.message || 'Failed to remove from cart');
-          }
-        } catch (err) {
-          toast.error('Error removing from cart');
-        }
+  // Cart mutation
+  const updateCartMutation = createMutation({
+  mutationFn: async (qty: number) => {
+    const token = localStorage.getItem('token');
+    const isLoggedIn = get(writableGlobalStore).isLogedIn;
+    
+    if (!token || !isLoggedIn) {
+      throw new Error('Please log in to add/update cart');
+    }
+
+    const response = await _axios.post(
+      '/cart/update',
+      {
+        products: [
+          {
+            productId: id,
+            quantity: qty,
+          },
+        ],
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
       }
-      return;
-    }
+    );
 
-    let numericQty = parseInt(qty);
-    if (numericQty < minQty) numericQty = minQty;
-    if (numericQty > maxQty) numericQty = maxQty;
-    selectedQty = numericQty.toString();
-    try {
-      await $updateCartMutation.mutateAsync(numericQty);
-    } catch (err) {
-      console.error('Cart update failed', err);
+    if (!response.data.status) {
+      throw new Error(response.data.message || 'Failed to update cart');
     }
+    return response.data;
+  },
+  onSuccess: () => {
+    queryClient.invalidateQueries(['cart']);
+    toast.success('Cart updated successfully!');
+  },
+  onError: (error: any) => {
+    if (error.message === 'Please log in to add/update cart') {
+      toast.error(error.message);
+      goto('/login');
+    } else {
+      toast.error(error.message || 'An error occurred while updating cart');
+    }
+  },
+});
+
+ async function handleQtyChange(qty: string) {
+  const token = localStorage.getItem('token');
+  if (!token || !get(writableGlobalStore).isLogedIn) {
+    toast.error('Please log in to update cart');
+    goto('/login');
+    return;
   }
 
-  // Handle select open/close
-  function handleSelectOpen() {
-    $openSelectId = $openSelectId === id.toString() ? null : id.toString();
+  let numericQty = parseInt(qty);
+  
+  // Handle remove product case (qty = 0)
+  if (numericQty === 0) {
+    removeProductMutation.mutate(id.toString());
+    selectedQty = '0'; // Reset to 0
+    return;
   }
+  
+  // Validate quantity range
+  if (numericQty < minQty) numericQty = minQty;
+  if (numericQty > maxQty) numericQty = maxQty;
+
+  selectedQty = numericQty.toString();
+
+  try {
+    console.log('Updating cart with qty:', numericQty);
+    await updateCartMutation.mutateAsync(numericQty);
+  } catch (err) {
+    console.error('Cart update failed', err);
+  }
+}
+
+// Handle select open/close
+function handleSelectOpen() {
+  $openSelectId = $openSelectId === id.toString() ? null : id.toString();
+}
+
 </script>
 
 <!-- Mobile View -->
@@ -227,14 +230,11 @@
         open={$openSelectId === id.toString()}
       >
         <Select.Trigger class="flex items-center justify-between w-14 text-base font-semibold">
-   <span>
-  {qtyOptions.find((q) => q.value === selectedQty)?.label === '-' 
-    ? '' 
-    : qtyOptions.find((q) => q.value === selectedQty)?.label ?? ' '}
-</span>
-
-        </Select.Trigger>
-        <Select.Content class="z-[99999]">
+  <span>
+    {selectedQty === '0' || selectedQty === ' ' ? '' : selectedQty}
+  </span>
+</Select.Trigger>
+        <Select.Content class="z-[30] !min-w-14 max-h-32">
           <Select.Group>
             {#each qtyOptions as qty (qty.value)}
               <Select.Item value={qty.value} label={qty.label} on:select={() => handleQtyChange(qty.value)}>
@@ -298,7 +298,7 @@
           <Select.Trigger class="w-14 text-center text-base font-semibold">
             {qtyOptions.find((q) => q.value === selectedQty)?.label ?? ''}
           </Select.Trigger>
-          <Select.Content class="z-[99999] !min-w-14 max-h-32">
+          <Select.Content class="z-[30] !min-w-14 max-h-32">
             <Select.Group class="">
               {#each qtyOptions as qty (qty.value)}
                 <Select.Item value={qty.value} label={qty.label} on:select={() => handleQtyChange(qty.value)}>
