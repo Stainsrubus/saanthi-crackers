@@ -226,6 +226,7 @@ function handleKeydown(event: KeyboardEvent, callback: Function) {
         <span class="line-through text-sm text-gray-400">₹{MRP}</span>
       {/if}
       <span class="text-lg font-semibold text-gray-800">₹{unitPrice}</span>
+      <span class="text-xs text-gray-500">/ {unit}</span>
     </div>
     <p class="text-sm text-gray-600">
       Total: <span class="font-semibold text-gray-900">₹{totalAmount.toFixed(2)}</span>
