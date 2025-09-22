@@ -551,13 +551,13 @@
         <p class={`${currentPath === '/Products' ? 'text-primary' : 'text-black'}`}>Products</p>
       </div>
 
-      <div onclick={() => goto('/quickorders')} class="flex items-center gap-2 cursor-pointer">
+      <!-- <div onclick={() => goto('/quickorders')} class="flex items-center gap-2 cursor-pointer">
         <img
           src={currentPath === '/quickorders' ? '/svg/rocket-filled.svg' : '/svg/rocket.svg'}
           alt="fac"
         />
         <p class={`${currentPath === '/quickorders' ? 'text-primary' : 'text-black'}`}>Quick Orders</p>
-      </div>
+      </div> -->
 
       <div onclick={() => goto('/wishlist')} class="flex items-center gap-2 cursor-pointer">
         <img
