@@ -422,6 +422,7 @@
       }
       const formData = new FormData();
       if (data.username) formData.append('username', data.username);
+      console.log("updated username",data.username);
       if (data.profileImage) formData.append('profileImage', data.profileImage);
       const response = await _axios.put('/user/', formData, {
         headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'multipart/form-data' },
@@ -549,6 +550,15 @@
         />
         <p class={`${currentPath === '/Products' ? 'text-primary' : 'text-black'}`}>Products</p>
       </div>
+
+      <div onclick={() => goto('/quickorders')} class="flex items-center gap-2 cursor-pointer">
+        <img
+          src={currentPath === '/quickorders' ? '/svg/rocket-filled.svg' : '/svg/rocket.svg'}
+          alt="fac"
+        />
+        <p class={`${currentPath === '/quickorders' ? 'text-primary' : 'text-black'}`}>Quick Orders</p>
+      </div>
+
       <div onclick={() => goto('/wishlist')} class="flex items-center gap-2 cursor-pointer">
         <img
           src={currentPath === '/wishlist' ? '/svg/fav-filled.svg' : '/svg/fav.svg'}
@@ -564,7 +574,8 @@
         />
         <p class={`${currentPath === '/about-us' ? 'text-primary' : 'text-black'}`}>About</p>
       </div>
-      <div onclick={() => goto('/cart')} class="flex items-center gap-2 cursor-pointer">
+
+      <!-- <div onclick={() => goto('/cart')} class="flex items-center gap-2 cursor-pointer">
         <div class="relative">
           <img
             src={currentPath === '/cart' ? '/svg/cart-filled.svg' : '/svg/cart.svg'}
@@ -579,7 +590,7 @@
         </div>
         <p class={`${currentPath === '/cart' ? 'text-primary' : 'text-black'}`}>Cart</p>
       </div>
-    
+     -->
     </div>
   </div>
 
@@ -644,7 +655,7 @@
   {/if}
 </div>
 
-    <!-- User Profile/Login -->
+    <!-- for mobile -->
     <div onclick={() => goto('/cart')} class="flex xl:hidden items-center gap-2 cursor-pointer">
       <div class="relative">
         <img
