@@ -248,6 +248,8 @@ function handleKeydown(event: KeyboardEvent, callback: Function) {
       >
   <Select.Trigger class="flex items-center outline-none  ring-0 !text-xs justify-between min-w-16 !max-h-8 text-base font-semibold">
             {selectedQty === '0' || selectedQty === ' ' ? '' : selectedQty}
+  </Select.Trigger>
+  <Select.Content class="z-[30] !min-w-14 max-h-32 text-sm">
           <Select.Group>
             {#each qtyOptions as qty (qty.value)}
               <Select.Item value={qty.value} label={qty.label}>
