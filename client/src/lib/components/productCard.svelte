@@ -217,8 +217,8 @@ function handleKeydown(event: KeyboardEvent, callback: Function) {
   role="button"
   tabindex="0"
 >
-  <div class="flex-shrink-0 w-20">
-    <img src={imgUrl + image} alt={name} class="w-20 h-20 object-contain rounded" />
+  <div class="flex-shrink-0 w-[20%] items-center justify-center">
+    <img src={imgUrl + image} alt={name} class="  object-contain rounded" />
   </div>
   <div class="flex-1 flex flex-col gap-2 relative">
     <h3 class="text-base font-bold text-[#222] leading-snug">{name}</h3>
@@ -226,15 +226,15 @@ function handleKeydown(event: KeyboardEvent, callback: Function) {
       {#if discount}
         <span class="line-through text-sm text-gray-400">₹{MRP}</span>
       {/if}
-      <span class="text-lg font-semibold text-gray-800">₹{unitPrice}</span>
+      <span class="text-sm font-semibold text-gray-800">₹{unitPrice}</span>
       <span class="text-xs text-gray-500">/ {unit}</span>
     </div>
-    <p class="text-sm text-gray-600">
+    <p class="text-xs text-gray-600">
       Total: <span class="font-semibold text-gray-900">₹{totalAmount.toFixed(2)}</span>
     </p>
-    <p class="text-sm text-green-600 font-medium">
+    <!-- <p class="text-sm text-green-600 font-medium">
       GST: {discount ? `${discount}%` : '2%'}
-    </p>
+    </p> -->
     <div class="absolute bottom-0 right-0 mb-2 mr-2 flex items-center" on:click|stopPropagation>
       <span class="text-xs text-gray-600 mr-1">Qty</span>
       <Select.Root
@@ -300,7 +300,9 @@ function handleKeydown(event: KeyboardEvent, callback: Function) {
     <div class="flex flex-wrap items-center justify-between gap-2 mt-1">
       <div class="flex items-center gap-1 min-w-0">
         <span class="text-[#848484] text-xs sm:text-sm">Total :</span>
-        <span class="text-[#30363C] font-semibold text-sm sm:text-base">₹{totalAmount}</span>
+        {#if selectedQty !== ' '}
+          <span class="text-[#30363C] font-semibold text-sm sm:text-base">₹{totalAmount}</span>
+        {/if}
       </div>
       <div class="flex items-center gap-2 min-w-14" on:click|stopPropagation>
         <span class="text-xs text-gray-600">Qty</span>
@@ -313,7 +315,9 @@ function handleKeydown(event: KeyboardEvent, callback: Function) {
           open={$openSelectId === id.toString()}
         >
           <Select.Trigger class="w-20 text-center text-base font-semibold">
+ <span>
             {selectedQty === '0' || selectedQty === ' ' ? '' : selectedQty}
+          </span>
           </Select.Trigger>
           <Select.Content class="z-[30] !min-w-14 max-h-32">
             <Select.Group class="">

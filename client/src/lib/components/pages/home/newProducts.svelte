@@ -62,6 +62,7 @@
           description: product.description,
           ratings: product.ratings,
           categoryId: product.categoryId,
+          stock: product.stock,
           categoryName: product.categoryName,
           favorite: product.favorite,
           available: product.available,
@@ -136,7 +137,7 @@
       stock={product.stock}
     />
   {/each}
-  {console.log('Products:', products)}
+  <!-- {console.log('Products:', products)} -->
 </div>
         <button
           on:click={() => goto('/Products')}
