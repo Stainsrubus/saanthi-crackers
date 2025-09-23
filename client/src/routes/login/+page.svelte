@@ -9,6 +9,7 @@
   import { writableGlobalStore } from '$lib/stores/global-store'; 
   import { goto } from '$app/navigation'; // For navigation
   import { requestForToken } from '$lib/firebase';
+	import { queryClient } from '$lib/query-client';
 
   // Reactive state
   let mobile = $state('');
@@ -196,7 +197,7 @@
       console.log('Verify OTP Response:', response.data); // Debug log
       
       if (response.data && response.data.status) {
-        toast.success('OTP verified successfully');
+        // toast.success('OTP verified successfully');
         
         // Clear the timer
         if (interval) {
@@ -230,14 +231,7 @@
 
   // Perform login after OTP verification
   async function performLogin() {
-   
-    if (!validateReferCode()) {
-     
-      return;
-    }
-
     isLoggingIn = true;
-    
     try{
       const payload = { 
         mobile: mobile,
@@ -247,6 +241,7 @@
       const response = await _axios.post('/userauth/login', payload);
       
       if (response.data && response.data.status) {
+        //  queryClient.invalidateQueries(['cartCount']);
         const userData = response.data.data;
         
         // Update global store
@@ -260,8 +255,6 @@
           },
           isLogedIn: true,
         }));
-        
-        console.log(writableGlobalStore.userDetails)
         // Store in localStorage
         localStorage.setItem('token', userData.token);
         localStorage.setItem('_id', userData.userDetails.userId);
@@ -271,23 +264,24 @@
         // Handle FCM token if needed
         if (typeof window !== 'undefined') {
           try {
-            console.log('Requesting FCM token...');
+            //0 console.log('Requesting FCM token...');
             const token = await requestForToken();
             if (token) {
-              console.log('FCM token received:', token);
-              toast.success('Notifications enabled');
+              // console.log('FCM token received:', token);
+              // toast.success('Notifications enabled');
             } else {
-              console.warn('No FCM token received');
+              // console.warn('No FCM token received');
               toast.warning('Notifications may not work. Enable them in browser settings.');
             }
           } catch (error) {
-            console.error('FCM token error:', error);
+            // console.error('FCM token error:', error);
             toast.warning('Failed to enable notifications. Try again later.');
           }
         }
         
-        toast.success(userData.newUser ? 'Welcome! Account created successfully.' : 'Login successful');
-        
+        // toast.success(userData.newUser ? 'Welcome! Account created successfully.' : 'Login successful');
+  
+         queryClient.invalidateQueries(['cartCount']);
         // Navigate to dashboard
         goto('/');
       } else {

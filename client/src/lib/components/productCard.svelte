@@ -151,7 +151,7 @@
     return response.data;
   },
   onSuccess: () => {
-    queryClient.invalidateQueries(['cart']);
+    queryClient.invalidateQueries(['cartCount']);
     toast.success('Cart updated successfully!');
   },
   onError: (error: any) => {
@@ -235,8 +235,9 @@ function handleKeydown(event: KeyboardEvent, callback: Function) {
     <!-- <p class="text-sm text-green-600 font-medium">
       GST: {discount ? `${discount}%` : '2%'}
     </p> -->
-    <div class="absolute bottom-0 right-0 mb-2 mr-2 flex items-center" on:click|stopPropagation>
-      <span class="text-xs text-gray-600 mr-1">Qty</span>
+    <div class="absolute bottom-0 right-0 mb-0 mr-0 flex items-center" on:click|stopPropagation>
+      <div class="flex items-end ">
+ <span class="text-xs text-gray-600 mr-1">Qty</span>
       <Select.Root
         type="single"
         name={`qty-${id}`}
@@ -245,7 +246,7 @@ function handleKeydown(event: KeyboardEvent, callback: Function) {
         onValueChange={(value) => handleQtyChange(value)}
         open={$openSelectId === id.toString()}
       >
-  <Select.Trigger class="flex items-center justify-between w-20 text-base font-semibold">
+  <Select.Trigger class="flex items-center outline-none  ring-0 !text-xs justify-between min-w-16 !max-h-8 text-base font-semibold">
           <span>
             {selectedQty === '0' || selectedQty === ' ' ? '' : selectedQty}
           </span>
@@ -260,6 +261,8 @@ function handleKeydown(event: KeyboardEvent, callback: Function) {
           </Select.Group>
         </Select.Content>
       </Select.Root>
+        </div>
+     
     </div>
   </div>
 </div>

@@ -99,6 +99,7 @@
   const cartCountQuery = createQuery<CartCountResponse>({
     queryKey: ['cartCount'],
     queryFn: async () => {
+       console.log('cart count called')
       const token = localStorage.getItem('token');
       if (!token) {
         return { status: false, message: "No token found", count: 0 };
@@ -107,6 +108,7 @@
         const response = await _axios.get('/cart/count', {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
         });
+        console.log('Cart count response:', response.data.count)
         if (!response.data.status && response.data.message === "No active cart found") {
           return { status: true, message: "No active cart", count: 0 };
         } else if (!response.data.status) {
@@ -118,10 +120,8 @@
         return { status: false, message: error.message, count: 0 };
       }
     },
-    retry: 1,
-    staleTime: 0,
-    refetchOnWindowFocus: true,
-    enabled: $writableGlobalStore.isLogedIn,
+    // refetchOnWindowFocus: true,
+    // enabled: $writableGlobalStore.isLogedIn,
   });
 
   const wishCountQuery = createQuery({
@@ -139,14 +139,14 @@
       }
       return response.data;
     },
-    retry: 1,
-    staleTime: 0,
+     refetchOnWindowFocus: true,
     enabled: $writableGlobalStore.isLogedIn,
   });
 
   const groupQuery = createQuery({
     queryKey: ['group'],
     queryFn: async () => {
+      console.log('group called')
       const response = await _axios.get('/group/all', {
         headers: {
           'Content-Type': 'application/json',
@@ -314,7 +314,7 @@
   }
 
   $: currentPath = $page.url.pathname;
-  $: cartCount = $writableGlobalStore.isLogedIn ? ($cartCountQuery.data?.count || 0) : 0;
+  $: cartCount = $writableGlobalStore.isLogedIn ? ($cartCountQuery.data?.count) : 0;
   $: wishCount = $writableGlobalStore.isLogedIn ? ($wishCountQuery.data?.count || 0) : 0;
   $: groupData = $writableGlobalStore.isLogedIn ? ($groupQuery.data || null) : null;
   $: isLoading = $cartCountQuery.isLoading;
