@@ -77,7 +77,7 @@ export const saveFile = async (
   }
 };
 
-export const deleteFile = (key: any) => {
+export const deleteFile = (key: any, p0: string) => {
   try {
     s3Client.send(
       new DeleteObjectCommand({
