@@ -235,8 +235,8 @@ function handleKeydown(event: KeyboardEvent, callback: Function) {
     <!-- <p class="text-sm text-green-600 font-medium">
       GST: {discount ? `${discount}%` : '2%'}
     </p> -->
-    <div class="absolute bottom-0 right-0 mb-2 mr-2 flex items-center" on:click|stopPropagation>
-      <span class="text-xs text-gray-600 mr-1">Qty</span>
+    <div class="absolute bottom-0 right-0 mb-0 mr-2 flex items-center md:flex-col" on:click|stopPropagation>
+      <span class="text-xs gap-2 text-gray-600 mr-1">Qty</span>
       <Select.Root
         type="single"
         name={`qty-${id}`}
@@ -245,7 +245,7 @@ function handleKeydown(event: KeyboardEvent, callback: Function) {
         onValueChange={(value) => handleQtyChange(value)}
         open={$openSelectId === id.toString()}
       >
-  <Select.Trigger class="flex items-center justify-between w-20 text-base font-semibold">
+          <Select.Trigger class="flex items-center justify-between w-19 h-8 text-xs font-semibold sm:w-16 sm:h-9 sm:text-base">
           <span>
             {selectedQty === '0' || selectedQty === ' ' ? '' : selectedQty}
           </span>
@@ -314,7 +314,7 @@ function handleKeydown(event: KeyboardEvent, callback: Function) {
           onValueChange={(value) => handleQtyChange(value)}
           open={$openSelectId === id.toString()}
         >
-          <Select.Trigger class="w-20 text-center text-base font-semibold">
+          <Select.Trigger class="flex items-center justify-between w-21 h-8 text-xs font-semibold sm:w-19 sm:h-9 sm:text-base">
  <span>
             {selectedQty === '0' || selectedQty === ' ' ? '' : selectedQty}
           </span>
