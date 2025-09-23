@@ -39,7 +39,7 @@
       label: (i + 1).toString(),
     })),
   ];
-console.log(stock)
+// console.log(stock)
   // Price calculations
   $: unitPrice = Math.round(MRP - (MRP * (discount || 0) / 100));
   $: totalAmount = unitPrice * (parseInt(selectedQty.toString()) || 1);

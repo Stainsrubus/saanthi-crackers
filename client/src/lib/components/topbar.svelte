@@ -335,7 +335,7 @@
     writableGlobalStore.update(() => ({
       userDetails: {
         profileImage: '',
-        userName: '',
+        username: '',
         mobile: ''
       },
       isLogedIn: false,
@@ -435,7 +435,7 @@
         ...store,
         userDetails: {
           ...store.userDetails,
-          userName: data.user.username || store.userDetails.userName,
+          userName: data.user.username || store.userDetails.username,
           profileImage: data.user.profileImage || store.userDetails.profileImage,
         },
       }));
@@ -705,6 +705,9 @@
                   alt="User Profile"
                   class="w-full h-full object-cover rounded-full"
                 />
+                {
+                  console.log($writableGlobalStore.userDetails)
+                }
               {:else if $writableGlobalStore.userDetails.username}
                 <span class="text-white text-lg font-semibold flex items-center justify-center w-full h-full rounded-full bg-custom-gradient">
                   {getInitials($writableGlobalStore.userDetails.username)}

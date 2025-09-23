@@ -254,13 +254,14 @@
           ...store,
           userDetails: {
             profileImage: userData.userDetails.profileImage || '',
-            userName: userData.userDetails.username || '',
+            username: userData.userDetails.username || '',
             mobile: userData.userDetails.mobile || '',
             userId: userData.userDetails.userId || '',
           },
           isLogedIn: true,
         }));
         
+        console.log(writableGlobalStore.userDetails)
         // Store in localStorage
         localStorage.setItem('token', userData.token);
         localStorage.setItem('_id', userData.userDetails.userId);
