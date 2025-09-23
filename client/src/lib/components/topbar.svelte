@@ -575,7 +575,7 @@
         <p class={`${currentPath === '/about-us' ? 'text-primary' : 'text-black'}`}>About</p>
       </div>
 
-      <!-- <div onclick={() => goto('/cart')} class="flex items-center gap-2 cursor-pointer">
+      <div onclick={() => goto('/cart')} class="flex items-center gap-2 cursor-pointer">
         <div class="relative">
           <img
             src={currentPath === '/cart' ? '/svg/cart-filled.svg' : '/svg/cart.svg'}
@@ -590,7 +590,7 @@
         </div>
         <p class={`${currentPath === '/cart' ? 'text-primary' : 'text-black'}`}>Cart</p>
       </div>
-     -->
+    
     </div>
   </div>
 

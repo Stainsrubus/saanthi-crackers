@@ -135,8 +135,12 @@
 
   const checkOverflow = () => {
     if (descriptionRef) {
-      const { scrollHeight, offsetHeight } = descriptionRef;
-      showViewMore = scrollHeight > offsetHeight;
+      if (!isDescriptionExpanded) {
+        const { scrollHeight, offsetHeight } = descriptionRef;
+        showViewMore = scrollHeight > offsetHeight;
+      } else {
+        showViewMore = true;
+      }
     }
   };
 
@@ -335,7 +339,7 @@
 
   $: visibleSpecs = showAllSpecs && $productQuery.data ? $productQuery.data.specifications : ($productQuery.data?.specifications || []).slice(0, 2);
   $: discountPercentage = $productQuery.data ? Math.round((($productQuery.data.strikePrice - $productQuery.data.MRP) / $productQuery.data.strikePrice) * 100) : 0;
-  $: if ($productQuery.data?.description) {
+  $: if ($productQuery.data?.description || isDescriptionExpanded) {
     setTimeout(checkOverflow, 50);
   }
 </script>
@@ -646,7 +650,10 @@
             </p>
             {#if showViewMore}
               <button
-                onclick={() => isDescriptionExpanded = !isDescriptionExpanded}
+                onclick={() => {
+                  isDescriptionExpanded = !isDescriptionExpanded;
+                  setTimeout(checkOverflow, 50);
+                }}
                 class="mt-2 text-blue-600 hover:text-blue-800 font-medium text-sm"
               >
                 {isDescriptionExpanded ? 'Show Less' : 'Read More'}

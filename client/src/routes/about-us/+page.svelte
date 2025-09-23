@@ -56,6 +56,21 @@
     L = await import('leaflet');
     await import('leaflet/dist/leaflet.css');
 
+    // Fix default icon URLs for Leaflet markers
+    const iconRetinaUrl = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png';
+    const iconUrl = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png';
+    const shadowUrl = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png';
+    L.Marker.prototype.options.icon = L.icon({
+      iconRetinaUrl,
+      iconUrl,
+      shadowUrl,
+      iconSize: [25, 41],
+      iconAnchor: [12, 41],
+      popupAnchor: [1, -34],
+      tooltipAnchor: [16, -28],
+      shadowSize: [41, 41]
+    });
+
     if (!mapContainer) return;
 
     map = L.map(mapContainer).setView([8.183538566165574, 77.40885283254259], 13);
