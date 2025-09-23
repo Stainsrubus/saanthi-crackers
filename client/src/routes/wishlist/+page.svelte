@@ -632,18 +632,21 @@
         </div>
       {:else}
         <div>
-          <div class="card md:flex md:flex-wrap grid grid-cols-2 justify-center md:justify-normal lg:gap-10 gap-3">
+          <div class="card md:flex md:flex-wrap gap-3 justify-center md:justify-normal lg:gap-10 gap-3">
             {#each (products as any[]) as product (product.id)}
+            <div class="mb-2 md:mb-0">
               <ProductCard
                 id={product.id}
                 image={product.image}
                 discount={product.discount}
                 name={product.name}
                 MRP={product.MRP}
+                stock={product.stock}
                 unit={product.unit?.name}
                 favorite={product.favorite}
                 available={product.stock === 0 ? false : true}
               />
+              </div>
             {/each}
           </div>
         </div>
