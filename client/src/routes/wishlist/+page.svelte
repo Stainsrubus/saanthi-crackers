@@ -410,10 +410,17 @@
   <!-- svelte-ignore a11y_no_static_element_interactions -->
   <main class="flex-1 lg:px-3  py-0 p-0">
     <!-- Filter Button and Active Filters -->
-    <p class="lg:hidden block text-3xl py-5 font-bold">
-			Wishlist
-		</p>
-    <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center justify-between mb-4 w-full">
+      <span class="text-3xl font-bold">Wishlist</span>
+      <div class="lg:hidden flex justify-end w-auto">
+        <button
+          on:click|stopPropagation={toggleMobileSidebar}
+          class="bg-custom-gradient text-white text-base px-6 py-2 rounded-full flex items-center"
+        >
+          <Icon icon="mdi:filter" class="w-5 h-5 mr-2" />
+          Filters
+        </button>
+      </div>
       <button
         on:click|stopPropagation={toggleDesktopFilter}
         class="bg-custom-gradient text-white text-base px-6 py-2 rounded-full items-center hidden lg:flex"
@@ -421,14 +428,7 @@
         <Icon icon="mdi:filter" class="w-5 h-5 mr-2" />
         Filters
       </button>
-      <!-- Mobile Filter Button -->
-      <button
-        on:click|stopPropagation={toggleMobileSidebar}
-        class="bg-custom-gradient text-white text-base px-6 py-2 rounded-full flex items-center lg:hidden"
-      >
-        <Icon icon="mdi:filter" class="w-5 h-5 mr-2" />
-        Filters
-      </button>
+      <!-- Mobile Filter Button (single, right of Wishlist) -->
       <!-- Active Filters -->
       {#if activeFilters.length > 0}
         <div class="flex flex-wrap gap-2">
