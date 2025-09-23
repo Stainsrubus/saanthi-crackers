@@ -15,6 +15,7 @@
     name: string;
     image: string[];
     MRP: number;
+    stock: number;
     available: boolean;
     description?: string;
     discount?: number;
@@ -132,8 +133,10 @@
       unit={product?.unit}
       favorite={product.favorite}
       available={product.available}
+      stock={product.stock}
     />
   {/each}
+  {console.log('Products:', products)}
 </div>
         <button
           on:click={() => goto('/Products')}

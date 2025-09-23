@@ -19,6 +19,7 @@
   export let name: string;
   export let available: boolean = true;
   export let MRP: number;
+  export let stock: number;
   export let unit: string;
   export let id: string | number;
   export let favorite: boolean = false;
@@ -33,12 +34,12 @@
   // Generate quantity options (1 to 100, plus 'Qty' for reset)
   const qtyOptions = [
     { value: '0', label: '-' },
-    ...Array(100).fill(0).map((_, i) => ({
+    ...Array(stock).fill(0).map((_, i) => ({
       value: (i + 1).toString(),
       label: (i + 1).toString(),
     })),
   ];
-
+console.log(stock)
   // Price calculations
   $: unitPrice = Math.round(MRP - (MRP * (discount || 0) / 100));
   $: totalAmount = unitPrice * (parseInt(selectedQty.toString()) || 1);

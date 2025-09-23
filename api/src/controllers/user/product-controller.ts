@@ -25,6 +25,7 @@ export const productController = new Elysia({
     group,
     minPrice,
     maxPrice,
+    stock,
     occations,
     ageGroups
   } = query;
@@ -152,8 +153,9 @@ export const productController = new Elysia({
           brandName: "$brandDetails.name",
           available: 1,
           occations: 1,
+          stock:1,
           ageGroup: 1,
-          groups: "$groupDetails" // This will be an array of group objects
+          groups: "$groupDetails" 
         }
       }
     ];

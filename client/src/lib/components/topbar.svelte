@@ -705,9 +705,9 @@
                   alt="User Profile"
                   class="w-full h-full object-cover rounded-full"
                 />
-              {:else if $writableGlobalStore.userDetails.userName}
+              {:else if $writableGlobalStore.userDetails.username}
                 <span class="text-white text-lg font-semibold flex items-center justify-center w-full h-full rounded-full bg-custom-gradient">
-                  {getInitials($writableGlobalStore.userDetails.userName)}
+                  {getInitials($writableGlobalStore.userDetails.username)}
                 </span>
               {:else}
                 <span class="text-white text-lg font-semibold flex items-center justify-center w-full h-full rounded-full bg-custom-gradient">
@@ -726,9 +726,9 @@
                       alt="User Profile"
                       class="w-full h-full object-cover rounded-full"
                     />
-                  {:else if $writableGlobalStore.userDetails.userName}
+                  {:else if $writableGlobalStore.userDetails.username}
                     <span class="text-white text-lg font-semibold flex items-center justify-center w-full h-full rounded-full bg-custom-gradient">
-                      {getInitials($writableGlobalStore.userDetails.userName)}
+                      {getInitials($writableGlobalStore.userDetails.username)}
                     </span>
                   {:else}
                     <span class="text-white text-lg font-semibold flex items-center justify-center w-full h-full rounded-full bg-custom-gradient">
@@ -739,7 +739,7 @@
                 <div class="flex md:px-0 w-full items-center justify-between">
                   <DropdownMenu.Item>
                     <p class="text-[#30363C] flex flex-col font-medium text-lg">
-                      {$writableGlobalStore.userDetails.userName || 'Username'}
+                      {$writableGlobalStore.userDetails?.username}
                       <span class="text-[#718491] text-sm">
                         {$writableGlobalStore.userDetails.mobile}
                       </span>
@@ -961,7 +961,7 @@
             name="username"
             autocomplete="off"
             placeholder="Enter Username"
-            value={$writableGlobalStore.userDetails.userName || ''}
+            value={$writableGlobalStore.userDetails.username || ''}
             class="mt-1 block w-full border-gray-300 rounded-lg border shadow-sm h-10 p-2 focus:ring-0 focus:outline-none text-sm"
           />
           {#if usernameError}

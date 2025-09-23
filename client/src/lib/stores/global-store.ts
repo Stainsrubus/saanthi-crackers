@@ -2,7 +2,7 @@ import { writable } from 'svelte/store';
 
 type userDetails = {
     profileImage: string;
-    userName: string;
+    username: string;
     mobile:string;
     userId:string;
 };
@@ -23,7 +23,7 @@ const getInitialState = (): GlobalStore => {
         return {
             userDetails: userData ? JSON.parse(userData) : {
                 profileImage: '',
-                userName: '',
+                username: '',
                 mobile:'',
                 userId:''
             },
@@ -35,7 +35,7 @@ const getInitialState = (): GlobalStore => {
     return {
         userDetails: {
             profileImage: '',
-            userName: '',
+            username: '',
             mobile:'',
             userId:''
         },
@@ -46,7 +46,6 @@ const getInitialState = (): GlobalStore => {
 };
 
 export const writableGlobalStore = writable<GlobalStore>(getInitialState());
-
 // Subscribe to store changes to persist them
 if (typeof window !== 'undefined') {
     writableGlobalStore.subscribe((state) => {
