@@ -247,11 +247,7 @@ function handleKeydown(event: KeyboardEvent, callback: Function) {
         open={$openSelectId === id.toString()}
       >
   <Select.Trigger class="flex items-center outline-none  ring-0 !text-xs justify-between min-w-16 !max-h-8 text-base font-semibold">
-          <span>
             {selectedQty === '0' || selectedQty === ' ' ? '' : selectedQty}
-          </span>
-        </Select.Trigger>
-        <Select.Content class="z-[30] !min-w-14 max-h-32">
           <Select.Group>
             {#each qtyOptions as qty (qty.value)}
               <Select.Item value={qty.value} label={qty.label}>
@@ -317,7 +313,7 @@ function handleKeydown(event: KeyboardEvent, callback: Function) {
           onValueChange={(value) => handleQtyChange(value)}
           open={$openSelectId === id.toString()}
         >
-          <Select.Trigger class="w-20 text-center text-base font-semibold">
+          <Select.Trigger class="flex items-center justify-between w-21 h-8 text-xs font-semibold sm:w-19 sm:h-9 sm:text-base">
  <span>
             {selectedQty === '0' || selectedQty === ' ' ? '' : selectedQty}
           </span>

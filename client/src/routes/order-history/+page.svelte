@@ -283,11 +283,11 @@
 
 {#if isLoggedIn}
 <div class="xl:max-w-[75%] 2xl:max-w-[60%] lg:max-w-[85%] md:max-w-[75%] bg-white mx-auto p-4 pb-20">
-  <div class="fixed bg-white w-full pt-5 -mt-4">
+  <div class="fixed bg-white w-full pt-5 -mt-4 pr-2 ">
     <h2 class="lg:text-3xl md:text-2xl text-xl font-bold text-[#30363C] mb-4">Your Orders</h2>
 
     <!-- Tab Navigation -->
-    <div class="flex space-x-4 mb-4">
+  <div class="flex overflow-x-auto scrollbar-hide"> 
       <button
         class="px-4 py-1 lg:text-xl md:text-lg text-base text-nowrap font-medium {activeTab === 'not yet shipped' ? 'border-b-2 border-primary text-primary' : 'text-[#4F585E] hover:text-gray-700'}"
         onclick={() => (activeTab = 'not yet shipped')}
