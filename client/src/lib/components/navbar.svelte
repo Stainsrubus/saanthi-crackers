@@ -54,7 +54,7 @@
       <span class="text-white text-nowrap hidden lg:block responsive-text">💥 Welcome to Firebloom Elite Crackers World 💥</span>
     </div>
 
-    <div class="absolute lg:left-[20%] left-[30%] flex justify-center pointer-events-none">
+    <div class="absolute lg:left-[20%] left-[30%] hidden lg:flex justify-center pointer-events-none">
       <img src="/svg/fireworks.svg" alt="Fireworks" class="h-6 w-auto" />
     </div>
 

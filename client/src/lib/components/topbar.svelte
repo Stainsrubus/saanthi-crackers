@@ -781,12 +781,12 @@
                   </div>
                 </DropdownMenu.Item>
                 <DropdownMenuSeparator class="bg-gray-200" />
-                <DropdownMenu.Item class='' onclick={() => goto('/demand-products')}>
+                <!-- <DropdownMenu.Item class='' onclick={() => goto('/demand-products')}>
                   <div class="flex justify-between font-medium text-lg items-center text-[#30363C] w-full px-2">
                     <p>Demand Products</p>
                     <Icon icon="lucide:move-right" />
                   </div>
-                </DropdownMenu.Item>
+                </DropdownMenu.Item> -->
                 <DropdownMenuSeparator class="bg-gray-200" />
                 <DropdownMenu.Item class='' onclick={() => goto('/about-us')}>
                   <div class="flex justify-between text-[#30363C] font-medium text-lg items-center w-full px-2">

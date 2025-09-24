@@ -72,7 +72,7 @@
 	});
 </script>
 
-<Toaster position="top-center" />
+<Toaster position="top-center" duration={2000} />
 <QueryClientProvider client={queryClient}>
 	<div class="sticky top-0 z-50 bg-white">
   {#if !$isMobile}

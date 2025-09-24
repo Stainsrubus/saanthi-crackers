@@ -190,9 +190,9 @@
           <li>
             <a href="/order-history" class="lg:text-lg text-base hover:underline">Order History</a>
           </li>
-          <li>
+          <!-- <li>
             <a href="/demand-products" class="lg:text-lg text-base hover:underline">Demand Products</a>
-          </li>
+          </li> -->
           <li>
             <a href="/wishlist" class="lg:text-lg text-base hover:underline">Wishlist</a>
           </li>
