@@ -355,7 +355,8 @@
 		  categoryName: product.categoryName,
 		  favorite: product.favorite,
 		  available: product.available,
-		  unit: product.unit
+		  unit: product.unit,
+		  stock: product.stock
 		}));
   
 		return {
@@ -378,7 +379,7 @@
 	$: brandsLoading = $brandsQuery.isLoading;
 	$: brandsError = $brandsQuery.error ? ($brandsQuery.error as Error).message : null;
 	$: products = $productsQuery.data?.pages.flatMap((page) => page.products) ?? [];
-	$: productsLoading = $productsQuery.isLoading || $productsQuery.isFetchingNextPage;
+	$: productsLoading	 = $productsQuery.isLoading || $productsQuery.isFetchingNextPage;
 	$: productsError = $productsQuery.error ? ($productsQuery.error as Error).message : null;
 	$: hasNextPage = $productsQuery.hasNextPage;
 	$: activeFilters = [
@@ -790,6 +791,7 @@
 											unit={product.unit}
 											favorite={product.favorite}
 											available={product.available}
+											stock={product.stock}
 										/>
 									</div>
 								{/each}
