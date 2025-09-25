@@ -787,7 +787,7 @@
                     <Icon icon="lucide:move-right" />
                   </div>
                 </DropdownMenu.Item> -->
-                <DropdownMenuSeparator class="bg-gray-200" />
+                <!-- <DropdownMenuSeparator class="bg-gray-200" /> -->
                 <DropdownMenu.Item class='' onclick={() => goto('/about-us')}>
                   <div class="flex justify-between text-[#30363C] font-medium text-lg items-center w-full px-2">
                     <p>About Us</p>
