@@ -36,36 +36,37 @@ export const userOrderController = new Elysia({
     const { addressId, couponId, paymentImages } = body;
 
     try {
-      const cart = await CartModel.findOne({
-        user: new mongoose.Types.ObjectId(userId),
-        status: "active",
-      }).populate("products.productId");
-
-      const user = await User.findById(userId);
+      // Parallelize initial queries
+      const [cart, user, address, store] = await Promise.all([
+        CartModel.findOne({
+          user: new mongoose.Types.ObjectId(userId),
+          status: "active",
+        })
+          .populate("products.productId")
+          .lean(),
+        User.findById(userId).lean(),
+        Address.findById(addressId).lean(),
+        StoreModel.findOne({}).lean(),
+      ]);
 
       if (!cart) {
         set.status = 404;
         return { message: "No active cart found", status: false };
       }
-
       if (!user) {
         set.status = 404;
         return { message: "User not found", status: false };
       }
-
-      const address = await Address.findById(addressId);
-
       if (!address) {
         set.status = 404;
         return { message: "Address not found", status: false };
       }
 
-      // Step 1: Validate stock for all products in cart
+      // Validate stock using populated products
       const stockValidationErrors = [];
       const validProducts = [];
-
       for (const cartItem of cart.products) {
-        const product = await Product.findById(cartItem.productId);
+        const product = cartItem.productId;
         if (!product) {
           stockValidationErrors.push({
             productId: cartItem.productId,
@@ -73,7 +74,6 @@ export const userOrderController = new Elysia({
           });
           continue;
         }
-
         if (product.stock < cartItem.quantity) {
           stockValidationErrors.push({
             productId: cartItem.productId,
@@ -83,10 +83,7 @@ export const userOrderController = new Elysia({
             message: `Insufficient stock for ${product.productName}. Available: ${product.stock}, Requested: ${cartItem.quantity}`,
           });
         } else {
-          validProducts.push({
-            cartItem,
-            product,
-          });
+          validProducts.push({ cartItem, product });
         }
       }
 
@@ -104,9 +101,24 @@ export const userOrderController = new Elysia({
         };
       }
 
-      let Estore = await StoreModel.findOne({});
-      let orderId = generateRandomString(6, "SC");
+      // Process file uploads concurrently
+      const paymentImagesArray = [];
+      if (paymentImages && Array.isArray(paymentImages)) {
+        const uploadPromises = paymentImages.map((image) =>
+          saveFile(image, "payment-images")
+        );
+        const uploadResults = await Promise.all(uploadPromises);
+        for (const { filename, ok } of uploadResults) {
+          if (!ok) {
+            set.status = 400;
+            return { message: `Unable to upload payment image`, status: false };
+          }
+          paymentImagesArray.push({ image: filename, verified: false });
+        }
+      }
 
+      // Create order
+      const orderId = generateRandomString(6, "SC");
       const orderProducts = cart.products.map((product) => ({
         productId: product.productId,
         quantity: product.quantity,
@@ -114,18 +126,6 @@ export const userOrderController = new Elysia({
         price: product.price,
         name: product.productId?.productName,
       }));
-
-      const paymentImagesArray = [];
-      if (paymentImages && Array.isArray(paymentImages)) {
-        for (const image of paymentImages) {
-          const { filename, ok } = await saveFile(image, "payment-images");
-          if (!ok) {
-            set.status = 400;
-            return { message: `Unable to upload payment image: ${image.name}`, status: false };
-          }
-          paymentImagesArray.push({ image: filename, verified: false });
-        }
-      }
 
       const order = new OrderModel({
         user: cart.user,
@@ -143,9 +143,9 @@ export const userOrderController = new Elysia({
         orderId,
       });
 
-      // Apply coupon if provided
+      // Apply coupon
       if (couponId) {
-        const coupon = await CouponModel.findById(couponId);
+        const coupon = await CouponModel.findById(couponId).lean();
         if (coupon) {
           const discountAmount = (coupon.discount / 100) * cart.totalPrice;
           order.couponDiscount = discountAmount;
@@ -155,56 +155,81 @@ export const userOrderController = new Elysia({
         }
       }
 
-      await order.save();
+      // Save order and update stock in parallel
+      const bulkOps = validProducts.map(({ cartItem, product }) => ({
+        updateOne: {
+          filter: { _id: product._id },
+          update: { $inc: { stock: -cartItem.quantity } },
+        },
+      }));
+      await Promise.all([
+        order.save(),
+        Product.bulkWrite(bulkOps),
+        CartModel.updateOne(
+          { _id: cart._id },
+          {
+            products: [],
+            subtotal: 0,
+            tax: 0,
+            totalPrice: 0,
+            deliveryFee: 0,
+            deliverySeconds: 0,
+            platformFee: 0,
+            totalDistance: 0,
+          }
+        ),
+      ]);
 
-      // Step 2: Reduce stock for all valid products
-      for (const { cartItem, product } of validProducts) {
-        product.stock -= cartItem.quantity;
-        await product.save();
-      }
+      // Fire-and-forget notifications & broadcast
+      (async () => {
+        try {
+          await sendNotification(user.fcmToken, "Order Placed!", `Your order #${orderId} has been placed successfully.`);
+        } catch (err) {
+          console.error("sendNotification failed:", err);
+        }
+        try {
+          broadcastMessage(`New Order with Order ID: ${orderId} is placed by ${user.username}`);
+        } catch (err) {
+          console.error("broadcastMessage failed:", err);
+        }
+        try {
+          await NotificationModel.create({
+            title: "Order Placed!",
+            description: `Your order #${orderId} has been placed successfully.`,
+            type: "Order",
+            userId: typeof userId === 'string' ? new mongoose.Types.ObjectId(userId) : userId,
+            isRead: false,
+            orderId: order._id,
+            response: "",
+            demand: ""
+          });
+          console.log("Notification saved");
+        } catch (error) {
+          console.error("Failed to save notification:", error);
+        }
+      })();
 
-      // Clear the cart
-      cart.products = [];
-      cart.subtotal = 0;
-      cart.tax = 0;
-      cart.totalPrice = 0;
-      cart.deliveryFee = 0;
-      cart.deliverySeconds = 0;
-      cart.platformFee = 0;
-      cart.totalDistance = 0;
-      await cart.save();
-
-
-      await sendNotification(
-        user.fcmToken,
-        "Order Placed!",
-        `Your order #${orderId} has been placed successfully.`
-      );
-
-      broadcastMessage(`New Order with Order ID: ${orderId} is placed by ${user.username}`);
-
-try {
-  const notification = await NotificationModel.create({
-    title: "Order Placed!",
-    description: `Your order #${orderId} has been placed successfully.`,
-    type: "Order",
-    userId: new mongoose.Types.ObjectId(userId),
-    isRead: false,
-    orderId: order._id,
-    response: "",
-    demand: ""
-  });
-  console.log("✅ Notification saved:", notification);
-} catch (error) {
-  console.error("❌ Failed to save notification:", error);
-}
-console.log("After notification save");
-
-return {
-  message: "Order created successfully",
-  status: true,
-  order,
-};
+      // Build response object
+      return {
+        message: "Order created successfully",
+        status: true,
+        order: {
+          _id: order._id,
+          user: order.user,
+          orderId: order.orderId,
+          addressId: order.addressId,
+          couponDiscount: order.couponDiscount || 0,
+          subtotal: order.subtotal,
+          tax: order.tax,
+          totalPrice: order.totalPrice,
+          status: order.status,
+          paymentMethod: order.paymentMethod,
+          paymentStatus: order.paymentStatus,
+          paymentImages: order.paymentImages,
+          createdAt: order.createdAt,
+          updatedAt: order.updatedAt
+        }
+      };
     } catch (error) {
       set.status = 500;
       console.error("Order Creation Error:", error);
@@ -218,12 +243,12 @@ return {
   {
     body: t.Object({
       addressId: t.String({
-        pattern: `^[a-fA-F0-9]{24}$`,
+        pattern: "^[a-fA-F0-9]{24}$",
       }),
       couponId: t.Optional(t.String()),
       paymentImages: t.Files({
         maxItems: 5,
-        type: ['image/jpeg', 'image/png', 'application/pdf']
+        type: ["image/jpeg", "image/png", "application/pdf"],
       }),
     }),
     detail: {
@@ -232,6 +257,7 @@ return {
     },
   }
 )
+
 .post(
   "/createpayorder",
   async ({ set, store }) => {
