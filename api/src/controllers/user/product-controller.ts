@@ -162,7 +162,7 @@ export const productController = new Elysia({
 
     const allProducts = await Product.aggregate(aggregationPipeline);
 
-    let userFavorites = [];
+    let userFavorites: string | any[] = [];
 
     if (userId) {
       const favorites = await Favorites.findOne({ user: userId });

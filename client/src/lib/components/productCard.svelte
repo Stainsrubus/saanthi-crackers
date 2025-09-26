@@ -237,18 +237,33 @@
 
 <!-- Mobile View -->
 <div 
-  class="sm:hidden w-full bg-white border rounded-lg shadow p-4 flex items-start gap-4 cursor-pointer {isOutOfStock ? 'opacity-60' : 'cursor-pointer'}" 
+  class="sm:hidden w-full bg-white border rounded-lg shadow p-4 flex items-start gap-4 cursor-pointer {isOutOfStock ? 'opacity-60' : 'cursor-pointer'} relative" 
   on:click={handleClick}
   on:keydown={(e) => handleKeydown(e, handleClick)}
   role="button"
   tabindex={isOutOfStock ? '-1' : '0'}
   aria-disabled={isOutOfStock}
 >
+  <!-- Favorite Button for Mobile -->
+  {#if !isOutOfStock}
+    <button
+      class="absolute top-3 right-3 bg-white h-7 w-7 flex justify-center items-center rounded-full shadow hover:scale-110 transition-all z-20"
+      on:click|stopPropagation={handleFavorite}
+      aria-label={favorite ? 'Remove from favorites' : 'Add to favorites'}
+    >
+      {#if favorite}
+        <img class="px-0.1" src="/svg/fav-filled.svg" alt="Favorited" width={16} height={16} />
+      {:else}
+        <img class="px-0.1" src="/svg/fav.svg" alt="Favorite" width={16} height={16} />
+      {/if}
+    </button>
+  {/if}
+  
   <div class="flex-shrink-0 w-[20%] items-center justify-center">
     <img src={imgUrl + image} alt={name} class="object-contain rounded" />
   </div>
-  <div class="flex-1 flex flex-col gap-2 relative">
-    <h3 class="text-base font-bold text-[#222] leading-snug">{name}</h3>
+  <div class="flex-1 flex flex-col gap-2">
+    <h3 class="text-base font-bold text-[#222] leading-snug pr-8">{name}</h3>
     
     <!-- Stock Information -->
     {#if isOutOfStock}
@@ -271,7 +286,7 @@
     </p>
     
     {#if !isOutOfStock}
-      <div class="absolute bottom-0 right-0 mb-0 mr-0 flex items-center" on:click|stopPropagation>
+      <div class="flex items-center justify-end mt-1" on:click|stopPropagation>
         <div class="flex items-end">
           <span class="text-xs text-gray-600 mr-1">Qty</span>
           <Select.Root

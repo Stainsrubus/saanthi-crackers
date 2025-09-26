@@ -316,6 +316,7 @@
   $: currentPath = $page.url.pathname;
   $: cartCount = $writableGlobalStore.isLogedIn ? ($cartCountQuery.data?.count) : 0;
   $: wishCount = $writableGlobalStore.isLogedIn ? ($wishCountQuery.data?.count || 0) : 0;
+  console.log("wishcount", $wishCount);
   $: groupData = $writableGlobalStore.isLogedIn ? ($groupQuery.data || null) : null;
   $: isLoading = $cartCountQuery.isLoading;
   $: error = $cartCountQuery.error ? ($cartCountQuery.error as Error).message : null;
