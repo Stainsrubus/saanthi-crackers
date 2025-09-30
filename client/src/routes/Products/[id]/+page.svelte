@@ -533,37 +533,37 @@
               </button>
             </div>
           </div>
-          <div class="flex gap-4 py-3">
+          <div class="flex gap-3 py-2">
             <button
               onclick={handleAddToCart}
-              class="custom-button !w-fit hover:shadow-lg text-white py-3 px-6 rounded-lg hover:scale-95 duration-500 transition-all flex items-center justify-center gap-2 font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+              class="custom-button !w-fit hover:shadow-lg text-white py-2 px-4 rounded-lg hover:scale-95 duration-500 transition-all flex items-center justify-center gap-2 font-medium text-xs sm:text-base disabled:bg-gray-400 disabled:cursor-not-allowed"
               disabled={!$productQuery.data || $productQuery.data.stock == 0 || $addToCartMutation.isPending}
             >
               {#if $addToCartMutation.isPending}
-                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
                 Adding...
               {:else}
-                <ShoppingCart class="w-5 h-5" />
+                <ShoppingCart class="w-4 h-4 sm:w-5 sm:h-5" />
                 {$productQuery.data?.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
               {/if}
             </button>
             {#if $productQuery.data?.stock > 0}
               <button
                 onclick={handleBuyNow}
-                class="bg-transparent shadow-[0_4px_0px_0px_#b30000] border-[#f7c079] border-dashed border !w-fit hover:shadow-lg text-red-700 py-3 px-6 rounded-lg hover:scale-95 duration-500 transition-all flex items-center justify-center gap-2 font-medium disabled:bg-gray-400 disabled:cursor-not-allowed"
+                class="bg-transparent shadow-[0_4px_0px_0px_#b30000] border-[#f7c079] border-dashed border !w-fit hover:shadow-lg text-red-700 py-2 px-4 rounded-lg hover:scale-95 duration-500 transition-all flex items-center justify-center gap-2 font-medium text-xs sm:text-base disabled:bg-gray-400 disabled:cursor-not-allowed"
                 disabled={!$productQuery.data || $productQuery.data.stock == 0 || $buyNowMutation.isPending}
               >
                 {#if $buyNowMutation.isPending}
-                  <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
                   Processing...
                 {:else}
-                  <ShoppingBag class="w-5 h-5" />
+                  <ShoppingBag class="w-4 h-4 sm:w-5 sm:h-5" />
                   Buy Now
                 {/if}
               </button>
