@@ -220,10 +220,35 @@
     }
   }
 
-  // Handle select open/close
+  // Handle select open - Force close others when opening
   function handleSelectOpen() {
     if (isOutOfStock) return; // Don't open select for out of stock items
-    $openSelectId = $openSelectId === id.toString() ? null : id.toString();
+    
+    // Close any previously open dropdown and open this one
+    $openSelectId = id.toString();
+  }
+
+  // Handle select close
+  function handleSelectClose() {
+    // Only close if this is the currently open select
+    if ($openSelectId === id.toString()) {
+      $openSelectId = null;
+    }
+  }
+
+  // Handle trigger click - More explicit control
+  function handleTriggerClick(event: MouseEvent) {
+    if (isOutOfStock) return;
+    
+    event.stopPropagation();
+    
+    if ($openSelectId === id.toString()) {
+      // If already open, close it
+      $openSelectId = null;
+    } else {
+      // Otherwise, close any open select and open this one
+      $openSelectId = id.toString();
+    }
   }
 
   function handleKeydown(event: KeyboardEvent, callback: Function) {
@@ -233,12 +258,31 @@
     }
   }
 
+  // Close dropdown when clicking outside
+  function handleClickOutside(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    const isSelectTrigger = target.closest('[data-select-trigger]');
+    const isSelectContent = target.closest('[data-select-content]');
+  
+    if (!isSelectTrigger && !isSelectContent) {
+      $openSelectId = null;
+    }
+  }
+
+  // Add click outside listener when component mounts
+  import { onMount } from 'svelte';
+  onMount(() => {
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  });
 </script>
 
 <!-- Mobile View -->
 <div 
   class="sm:hidden w-full bg-white border rounded-lg shadow p-4 flex items-start gap-4 cursor-pointer {isOutOfStock ? 'opacity-60' : 'cursor-pointer'} relative" 
-  on:click={handleClick}
+  
   on:keydown={(e) => handleKeydown(e, handleClick)}
   role="button"
   tabindex={isOutOfStock ? '-1' : '0'}
@@ -259,7 +303,7 @@
     </button>
   {/if}
   
-  <div class="flex-shrink-0 w-[20%] items-center justify-center">
+  <div class="flex-shrink-0 w-[20%] items-center justify-center" on:click={handleClick}>
     <img src={imgUrl + image} alt={name} class="object-contain rounded" />
   </div>
   <div class="flex-1 flex flex-col gap-2">
@@ -286,34 +330,38 @@
     </p>
     
     {#if !isOutOfStock}
-      <div class="flex items-center justify-end mt-1" on:click|stopPropagation>
+      <div class="flex items-center justify-end mt-1">
         <div class="flex items-end">
           <span class="text-xs text-gray-600 mr-1">Qty</span>
-          <Select.Root
-            type="single"
-            name={`qty-${id}`}
-            bind:value={selectedQty}
-            on:open={() => handleSelectOpen()}
-            onValueChange={(value) => handleQtyChange(value)}
-            open={$openSelectId === id.toString()}
-            disabled={isOutOfStock}
-          >
-            <Select.Trigger 
-              class="flex items-center justify-between w-21 h-8 text-xs font-semibold sm:w-19 sm:h-9 sm:text-base {isOutOfStock ? 'opacity-50 cursor-not-allowed' : ''}"
+          <div>
+            <Select.Root
+              type="single"
+              name={`qty-${id}`}
+              bind:value={selectedQty}
+              on:open={handleSelectOpen}
+              on:close={handleSelectClose}
+              onValueChange={(value) => handleQtyChange(value)}
+              open={$openSelectId === id.toString()}
               disabled={isOutOfStock}
             >
-              {selectedQty === '0' || selectedQty === ' ' ? '' : selectedQty}
-            </Select.Trigger>
-            <Select.Content class="z-[30] !min-w-14 max-h-32 text-sm">
-              <Select.Group>
-                {#each qtyOptions as qty (qty.value)}
-                  <Select.Item value={qty.value} label={qty.label}>
-                    {qty.label}
-                  </Select.Item>
-                {/each}
-              </Select.Group>
-            </Select.Content>
-          </Select.Root>
+              <Select.Trigger 
+                class="flex items-center justify-between w-21 h-8 text-xs font-semibold sm:w-19 sm:h-9 sm:text-base {isOutOfStock ? 'opacity-50 cursor-not-allowed' : ''}"
+                disabled={isOutOfStock}
+                data-select-trigger
+              >
+                {selectedQty === '0' || selectedQty === ' ' ? '' : selectedQty}
+              </Select.Trigger>
+              <Select.Content class="z-[30] !min-w-14 max-h-32 text-sm" data-select-content>
+                <Select.Group>
+                  {#each qtyOptions as qty (qty.value)}
+                    <Select.Item value={qty.value} label={qty.label}>
+                      {qty.label}
+                    </Select.Item>
+                  {/each}
+                </Select.Group>
+              </Select.Content>
+            </Select.Root>
+          </div>
         </div>
       </div>
     {/if}
@@ -377,32 +425,38 @@
             <span class="text-[#30363C] font-semibold text-sm sm:text-base">₹{totalAmount}</span>
           {/if}
         </div>
-        <div class="flex items-center gap-2 min-w-14" on:click|stopPropagation>
+        <div class="flex items-center gap-2 min-w-14">
           <span class="text-xs text-gray-600">Qty</span>
-          <Select.Root
-            type="single"
-            name={`qty-${id}`}
-            bind:value={selectedQty}
-            on:open={() => handleSelectOpen()}
-            onValueChange={(value) => handleQtyChange(value)}
-            open={$openSelectId === id.toString()}
-            disabled={isOutOfStock}
-          >
-            <Select.Trigger class="flex items-center justify-between w-21 h-8 text-xs font-semibold sm:w-19 sm:h-9 sm:text-base {isOutOfStock ? 'opacity-50 cursor-not-allowed' : ''}">
-              <span>
-                {selectedQty === '0' || selectedQty === ' ' ? '' : selectedQty}
-              </span>
-            </Select.Trigger>
-            <Select.Content class="z-[30] !min-w-14 max-h-32">
-              <Select.Group class="">
-                {#each qtyOptions as qty (qty.value)}
-                  <Select.Item value={qty.value} label={qty.label}>
-                    {qty.label}
-                  </Select.Item>
-                {/each}
-              </Select.Group>
-            </Select.Content>
-          </Select.Root>
+          <div on:click|stopPropagation>
+            <Select.Root
+              type="single"
+              name={`qty-${id}`}
+              bind:value={selectedQty}
+              on:open={handleSelectOpen}
+              on:close={handleSelectClose}
+              onValueChange={(value) => handleQtyChange(value)}
+              open={$openSelectId === id.toString()}
+              disabled={isOutOfStock}
+            >
+              <Select.Trigger 
+                class="flex items-center justify-between w-21 h-8 text-xs font-semibold sm:w-19 sm:h-9 sm:text-base {isOutOfStock ? 'opacity-50 cursor-not-allowed' : ''}" 
+                data-select-trigger
+              >
+                <span>
+                  {selectedQty === '0' || selectedQty === ' ' ? '' : selectedQty}
+                </span>
+              </Select.Trigger>
+              <Select.Content class="z-[30] !min-w-14 max-h-32" data-select-content>
+                <Select.Group class="">
+                  {#each qtyOptions as qty (qty.value)}
+                    <Select.Item value={qty.value} label={qty.label}>
+                      {qty.label}
+                    </Select.Item>
+                  {/each}
+                </Select.Group>
+              </Select.Content>
+            </Select.Root>
+          </div>
         </div>
       </div>
     {/if}

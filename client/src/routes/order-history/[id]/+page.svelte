@@ -499,14 +499,14 @@ const handleCancelOrder = async () => {
         {/if}
       </button> -->
       <button
-  on:click={() => downloadInvoice($orderQuery.data.data)}
-  class="rounded-lg text-white custom-button mb-4 flex gap-1 flex-nowrap p-2"
->
-  <span>
-    <Icon icon="material-symbols:downloading-rounded" width="24" height="24" />
-  </span>
-  Download Invoice
-</button>
+        on:click={() => downloadInvoice($orderQuery.data.data)}
+        class="rounded-lg text-white custom-button mb-4 flex items-center gap-1 whitespace-nowrap p-2 text-base sm:text-lg sm:p-3"
+      >
+        <span class="flex items-center">
+          <Icon icon="material-symbols:downloading-rounded" width="20" height="20" class="sm:w-4 sm:h-6" />
+        </span>
+        <span class="leading-tight">Download Invoice</span>
+      </button>
     </div>
 
     <!-- Order Header -->
