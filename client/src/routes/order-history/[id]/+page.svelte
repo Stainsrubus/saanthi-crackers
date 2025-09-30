@@ -500,10 +500,10 @@ const handleCancelOrder = async () => {
       </button> -->
       <button
         on:click={() => downloadInvoice($orderQuery.data.data)}
-        class="rounded-lg text-white custom-button mb-4 flex items-center gap-1 whitespace-nowrap p-2 text-base sm:text-lg sm:p-3"
+        class="rounded-lg text-white custom-button mb-4 flex items-center gap-1 whitespace-nowrap p-1 text-xs min-w-[110px] sm:min-w-[180px] sm:text-lg sm:p-3"
       >
         <span class="flex items-center">
-          <Icon icon="material-symbols:downloading-rounded" width="20" height="20" class="sm:w-4 sm:h-6" />
+          <Icon icon="material-symbols:downloading-rounded" width="16" height="16" class="sm:w-4 sm:h-6" />
         </span>
         <span class="leading-tight">Download Invoice</span>
       </button>
